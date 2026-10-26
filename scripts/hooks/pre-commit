@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# PathIITR pre-commit hook: blocks confidential data, secrets and personal info.
+# Install with: bash scripts/setup-hooks.sh
+# Never bypass with --no-verify. If it blocks you, fix the staged content.
+set -u
+
+MAX_BYTES=$((1024 * 1024))
+fail=0
+
+report() {
+  echo "  ✗ $1"
+  fail=1
+}
+
+# --- File checks: path, name, size -----------------------------------------
+while IFS= read -r -d '' f; do
+  case "$f" in
+    data/*) report "$f: files under data/ must never be committed" ;;
+  esac
+
+  case "$(basename "$f")" in
+    .env*) report "$f: .env files must never be committed" ;;
+  esac
+
+  blob=$(git ls-files -s -- "$f" | awk '{print $2}' | head -n1)
+  if [ -n "$blob" ]; then
+    size=$(git cat-file -s "$blob")
+    if [ "$size" -gt "$MAX_BYTES" ]; then
+      report "$f: $size bytes is over the 1 MB limit"
+    fi
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+# --- Content checks: added lines only ---------------------------------------
+# Emits "path:line: text" for every added line in the staged diff.
+added_lines=$(git diff --cached -U0 --no-color --diff-filter=ACMR | awk '
+  /^\+\+\+ / { file = substr($0, 7); next }
+  /^@@/      { split($3, a, ","); line = substr(a[1], 2) + 0; next }
+  /^\+/      { print file ":" line ": " substr($0, 2); line++ }
+')
+
+KEY_PATTERNS=(
+  'gsk_[A-Za-z0-9]{20,}'                           # Groq
+  'AIza[0-9A-Za-z_-]{30,}'                         # Google / Gemini
+  'sk-[A-Za-z0-9_-]{20,}'                          # OpenAI-style
+  'sb_(secret|publishable)_[A-Za-z0-9_-]{16,}'     # Supabase
+  'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}'   # JWT (legacy Supabase keys)
+  'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}'
+  'AKIA[0-9A-Z]{16}'                               # AWS
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+)
+# Assignments like api_key = "abcd...", matched case-insensitively.
+GENERIC_KEY_PATTERN=$'(api[_-]?key|secret|token|password)[\'"]?[[:space:]]*[:=][[:space:]]*[\'"][^\'"[:space:]]{16,}[\'"]'
+# Full IITR address (needs a local part, so a bare "@iitr.ac.in" domain check is allowed).
+EMAIL_PATTERN='[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)*iitr\.ac\.in'
+# 10-digit Indian mobile, optionally +91 / 91 / 0 prefixed, optionally split 5+5.
+PHONE_PATTERN='(^|[^0-9])(\+?91[ -]?|0)?[6-9][0-9]{4}[ -]?[0-9]{5}([^0-9]|$)'
+
+check() {
+  local label=$1 flags=$2 pattern=$3 hits
+  hits=$(printf '%s\n' "$added_lines" | grep $flags -e "$pattern")
+  if [ -n "$hits" ]; then
+    while IFS= read -r hit; do
+      report "$label: ${hit:0:160}"
+    done <<< "$hits"
+  fi
+}
+
+if [ -n "$added_lines" ]; then
+  for p in "${KEY_PATTERNS[@]}"; do
+    check "possible API key" -E "$p"
+  done
+  check "possible API key" -iE "$GENERIC_KEY_PATTERN"
+  check "IITR email address" -iE "$EMAIL_PATTERN"
+  check "phone number" -E "$PHONE_PATTERN"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo
+  echo "pre-commit: commit blocked. Unstage or fix the items above (git restore --staged <file>)."
+  echo "Real data belongs in data/ (gitignored); keys belong in .env.local."
+  exit 1
+fi
+exit 0

@@ -38,11 +38,33 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    SUPABASE_SECRET_KEY=<your-supabase-secret-key>
    ```
 
+   | Variable | Used by | Placeholder |
+   |---|---|---|
+   | `GROQ_API_KEY` | `lib/llm.ts`, Python scripts (primary LLM) | `<your-groq-key>` |
+   | `GEMINI_API_KEY` | `lib/llm.ts`, Python scripts (fallback LLM) | `<your-gemini-key>` |
+   | `NEXT_PUBLIC_SUPABASE_URL` | web app, loader scripts | `<your-supabase-project-url>` |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
+   | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
+
 4. Run the dev server:
 
    ```bash
    npm run dev
    ```
+
+## Python scripts
+
+Data scripts in `scripts/` (extraction, OCR, anonymisation, structuring, loading) run in a virtualenv.
+OCR needs the system Tesseract binary:
+
+```bash
+sudo apt install tesseract-ocr
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r scripts/requirements.txt
+```
+
+Scripts read keys from `.env.local` (see the table above).
 
 ## Data and confidentiality
 

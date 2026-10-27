@@ -66,6 +66,9 @@ pip install -r scripts/requirements.txt
 
 Old `.doc`/`.ppt` files are converted only if LibreOffice is installed (optional: `sudo apt install libreoffice`).
 
+Pipeline order: `python scripts/inventory.py`, `python scripts/extract.py`, then
+`python scripts/anonymise.py` (writes `data/work/clean/` and a review report, `data/work/anonymise_report.csv`).
+
 Scripts read keys from `.env.local` (see the table above).
 
 ## Data and confidentiality

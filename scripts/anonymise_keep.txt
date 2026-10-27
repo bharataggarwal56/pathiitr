@@ -1,0 +1,71 @@
+# Terms spaCy may tag as PERSON that anonymise.py must keep. One per line, case-insensitive.
+# PUBLIC terms only (companies, products, roles, places). Never put a real person's name here
+# unless they are a public figure; this file is committed to a public repo.
+
+# Companies / firms
+Jane Street
+Goldman Sachs
+Morgan Stanley
+Tower Research
+Texas Instruments
+Texas Instrument
+Qualcomm
+Graviton
+Optiver
+Citadel
+DE Shaw
+D. E. Shaw
+Samsung
+Nvidia
+Intel
+Analog Devices
+Mathworks
+Microsoft
+Google
+Amazon
+Adobe
+Uber
+Flipkart
+Bain
+McKinsey
+BCG
+Deloitte
+American Express
+JP Morgan
+JPMorgan
+Barclays
+Cisco
+Oracle
+
+# Tools, sites, technical terms named after people
+Java
+Django
+Keras
+Euler
+Dijkstra
+Fibonacci
+Fenwick
+Femwick
+Moore
+Mealy
+
+# Public authors, lecturers and educators (textbooks, NPTEL, YouTube)
+Razavi
+Morris Mano
+Xinfeng Zhou
+Gilbert Strang
+Shanti Pavan
+Kashyap
+Babbar
+Striver
+Luv
+
+# Places / institutes
+Roorkee
+IIT Roorkee
+
+# Roles / process words
+General Secretary
+Faculty
+HR
+Mcq

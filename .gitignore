@@ -31,3 +31,6 @@ __pycache__/
 # Misc
 .DS_Store
 *.log
+
+# Playwright MCP screenshots/snapshots
+.playwright-mcp/

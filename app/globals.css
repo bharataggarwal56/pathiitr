@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* IITR-inspired palette: deep navy + blue primary, white surfaces, one warm accent. */
+@theme {
+  --color-navy: #0b1f3a;
+  --color-navy-light: #16305a;
+  --color-brand: #1f4e9c;
+  --color-brand-tint: #e8eef8;
+  --color-surface: #ffffff;
+  --color-page: #f6f8fc;
+  --color-ink: #1e293b;
+  --color-muted: #64748b;
+  --color-accent: #e8a33d;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+}

@@ -54,7 +54,8 @@ GENERIC_KEY_PATTERN=$'(api[_-]?key|secret|token|password)[\'"]?[[:space:]]*[:=][
 # Full IITR address (needs a local part, so a bare "@iitr.ac.in" domain check is allowed).
 EMAIL_PATTERN='[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)*iitr\.ac\.in'
 # 10-digit Indian mobile, optionally +91 / 91 / 0 prefixed, optionally split 5+5.
-PHONE_PATTERN='(^|[^0-9])(\+?91[ -]?|0)?[6-9][0-9]{4}[ -]?[0-9]{5}([^0-9]|$)'
+# Digits glued to letters (inside a hex hash such as a model revision) are not counted.
+PHONE_PATTERN='(^|[^0-9A-Za-z])(\+?91[ -]?|0)?[6-9][0-9]{4}[ -]?[0-9]{5}([^0-9A-Za-z]|$)'
 
 check() {
   local label=$1 flags=$2 pattern=$3 hits

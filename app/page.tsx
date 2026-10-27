@@ -1,9 +1,15 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import AuthNotice from "@/components/AuthNotice";
 import { NAV_ITEMS } from "@/lib/nav";
 
 export default function Home() {
   return (
     <div className="space-y-8">
+      <Suspense>
+        <AuthNotice />
+      </Suspense>
+
       <section className="space-y-3">
         <h1 className="text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
           Plan your path at IIT Roorkee

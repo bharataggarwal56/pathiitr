@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
+import AuthButton from "@/components/AuthButton";
 
 export default function Header() {
   const pathname = usePathname();
@@ -38,6 +39,7 @@ export default function Header() {
             })}
           </ul>
         </nav>
+        <AuthButton />
       </div>
     </header>
   );

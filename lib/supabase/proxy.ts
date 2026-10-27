@@ -1,8 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowedEmail } from "@/lib/auth";
 
-// Refreshes the Supabase auth session cookie on every matched request.
-// The iitr.ac.in login gate will be added here with the auth step.
+// Pages anyone can see. Everything else needs an IITR login.
+function isPublicPath(pathname: string) {
+  return pathname === "/" || pathname.startsWith("/auth/");
+}
+
+// Refreshes the Supabase auth session cookie on every matched request
+// and keeps non-IITR or signed-out users away from protected pages.
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -28,7 +34,27 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Must run before anything else so a refreshed token can still be written to the response.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+
+  // Redirect while keeping any cookies Supabase just set (refreshed or cleared session).
+  const redirectTo = (path: string) => {
+    const redirect = NextResponse.redirect(new URL(path, request.url));
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  };
+
+  // Safety net: the callback already rejects these, but never keep a non-IITR session.
+  if (claims && !isAllowedEmail(claims.email)) {
+    await supabase.auth.signOut();
+    return redirectTo("/?auth_error=domain");
+  }
+
+  const { pathname, search } = request.nextUrl;
+  if (!claims && !isPublicPath(pathname)) {
+    const next = encodeURIComponent(pathname + search);
+    return redirectTo(`/?auth_error=login&next=${next}`);
+  }
 
   return response;
 }

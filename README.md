@@ -46,7 +46,17 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
    | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
 
-4. Run the dev server:
+4. Set up Google login (Supabase → Authentication):
+
+   - Providers → Google: enable it with the client ID/secret of a Google Cloud OAuth client whose
+     authorized redirect URI is `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+   - URL Configuration → Redirect URLs: add `http://localhost:3000/auth/callback`
+     (and `https://<your-vercel-domain>/auth/callback` once deployed).
+
+   Only `@iitr.ac.in` emails (including department addresses like `@ece.iitr.ac.in`) are let in;
+   anyone else is signed out straight away. Every page except the landing page needs login.
+
+5. Run the dev server:
 
    ```bash
    npm run dev

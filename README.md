@@ -64,6 +64,8 @@ source .venv/bin/activate
 pip install -r scripts/requirements.txt
 ```
 
+Old `.doc`/`.ppt` files are converted only if LibreOffice is installed (optional: `sudo apt install libreoffice`).
+
 Scripts read keys from `.env.local` (see the table above).
 
 ## Data and confidentiality

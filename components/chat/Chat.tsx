@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Loader2, MessageSquarePlus, RotateCcw } from "lucide-react";
 import Answer, { SourceList, citedNumbers } from "@/components/chat/Answer";
+import Feedback from "@/components/chat/Feedback";
 import {
   MAX_QUESTION_CHARS,
   STARTER_QUESTIONS,
@@ -191,6 +192,11 @@ export default function Chat() {
                 )}
                 {turn.answer && (
                   <SourceList sources={turn.sources} cited={citedNumbers(turn.answer)} anchor={`src-${turn.key}`} />
+                )}
+                {turn.status === "done" && turn.messageId && (
+                  <div className="mt-3 border-t border-slate-100 pt-2">
+                    <Feedback messageId={turn.messageId} />
+                  </div>
                 )}
               </div>
             </li>

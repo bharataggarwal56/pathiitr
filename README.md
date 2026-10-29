@@ -45,6 +45,9 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    | `NEXT_PUBLIC_SUPABASE_URL` | web app, loader scripts | `<your-supabase-project-url>` |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
    | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
+   | `LLM_DEBUG_FAIL` | optional, dev only: `groq` or `both` simulates rate limits in `lib/llm.ts` | unset |
+
+   In dev, `/api/llm-test?q=<question>` (login required) tries the LLM wrapper; it returns 404 in production.
 
 4. Set up Google login (Supabase → Authentication):
 

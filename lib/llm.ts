@@ -4,12 +4,21 @@ import { after } from "next/server";
 import { containsPersonalInfo } from "@/lib/pii";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// One wrapper for every LLM call: Groq first, Gemini free tier as fallback, optional answer cache.
-// Groq's model matches scripts/structure.py. Gemini differs on purpose: on the free tier
+// One wrapper for every LLM call, with an optional answer cache. Providers are tried in order;
+// each Groq model has its own free-tier bucket (8k tokens/min, 1k requests/day each), so the
+// backup takes over at Groq speed when the primary is rate-limited, and Gemini is the last resort.
+// The backup is qwen3.8-27b, not gpt-oss-20b: in tests 20b left a third of its answers uncited.
+// gpt-oss-120b matches scripts/structure.py. Gemini differs on purpose: on the free tier
 // gemini-3.6-flash with minimal thinking gave the first token in 6-10 s, gemini-3.5-flash
 // (used by the batch scripts, where speed doesn't matter) in 25 s or more.
-const GROQ_MODEL = "openai/gpt-oss-120b";
-const GEMINI_MODEL = "gemini-3.6-flash";
+type Provider = "groq" | "gemini";
+// reasoning: Groq's reasoning_effort ("none" turns qwen's thinking off).
+type Step = { id: "groq" | "groq-backup" | "gemini"; provider: Provider; model: string; reasoning?: "low" | "none" };
+const CHAIN: Step[] = [
+  { id: "groq", provider: "groq", model: "openai/gpt-oss-120b", reasoning: "low" },
+  { id: "groq-backup", provider: "groq", model: "qwen/qwen3.8-27b", reasoning: "none" },
+  { id: "gemini", provider: "gemini", model: "gemini-3.6-flash" },
+];
 const GEMINI_THINKING = { thinkingLevel: "minimal" };
 const LLM_TIMEOUT_MS = 15_000;
 // Gemini is the last resort and slower to start, so it gets longer before we give up.
@@ -20,7 +29,7 @@ const CUT_OFF_NOTE = "\n\n_(The answer was cut off. Please try again.)_";
 
 export const BUSY_MESSAGE = "PathIITR is busy right now. Please try again shortly.";
 
-// Both providers are rate-limited, timed out or down. Show BUSY_MESSAGE to the user.
+// Every provider is rate-limited, timed out or down. Show BUSY_MESSAGE to the user.
 export class LLMBusyError extends Error {
   constructor() {
     super(BUSY_MESSAGE);
@@ -30,8 +39,6 @@ export class LLMBusyError extends Error {
 
 // A provider failed in a way the next provider (or a later retry) might get past.
 class RetryableError extends Error {}
-
-type Provider = "groq" | "gemini";
 
 export type GenerateOptions = {
   system: string;
@@ -63,36 +70,32 @@ export async function generate(opts: GenerateOptions): Promise<GenerateResult> {
     if (hit) return hit;
   }
 
-  let provider: Provider = "groq";
-  let model = GROQ_MODEL;
-  let text: string;
-  try {
-    text = await callGroq(opts.system, opts.prompt, maxTokens);
-  } catch (error) {
-    if (!(error instanceof RetryableError)) throw error;
-    console.warn(`llm: Groq failed, falling back to Gemini (${error.message})`);
-    provider = "gemini";
-    model = GEMINI_MODEL;
+  for (const [i, step] of CHAIN.entries()) {
+    let text: string;
     try {
-      text = await callGemini(opts.system, opts.prompt, maxTokens);
-    } catch (fallbackError) {
-      if (!(fallbackError instanceof RetryableError)) throw fallbackError;
-      console.warn(`llm: Gemini failed too (${fallbackError.message})`);
-      throw new LLMBusyError();
+      debugFail(step);
+      text =
+        step.provider === "groq"
+          ? await callGroq(step, opts.system, opts.prompt, maxTokens)
+          : await callGemini(step.model, opts.system, opts.prompt, maxTokens);
+    } catch (error) {
+      if (!(error instanceof RetryableError)) throw error;
+      logFallback(i, error);
+      continue;
     }
+    const citations = cache?.citations ?? [];
+    let cacheId: number | null = null;
+    if (cache && cacheKey) {
+      cacheId = await writeCache(cacheKey, cache.question, text, citations, step.provider, step.model, cache.promptVersion);
+    }
+    return { text, provider: step.provider, model: step.model, cached: false, cacheId, citations };
   }
-
-  const citations = cache?.citations ?? [];
-  let cacheId: number | null = null;
-  if (cache && cacheKey) {
-    cacheId = await writeCache(cacheKey, cache.question, text, citations, provider, model, cache.promptVersion);
-  }
-  return { text, provider, model, cached: false, cacheId, citations };
+  throw new LLMBusyError();
 }
 
 // Like generate(), but hands each piece of the answer to onDelta as it arrives. A cache hit comes
-// as one piece. Gemini takes over only if Groq fails before its first token; a failure after that
-// ends the answer with CUT_OFF_NOTE, and that answer is not cached.
+// as one piece. The next provider takes over only if one fails before its first token; a failure
+// after that ends the answer with CUT_OFF_NOTE, and that answer is not cached.
 export async function generateStream(
   opts: GenerateOptions,
   onDelta: (text: string) => void,
@@ -114,39 +117,42 @@ export async function generateStream(
     text += piece;
     onDelta(piece);
   };
-  const cutOff = (provider: Provider, model: string, error: unknown): GenerateResult => {
-    console.warn(`llm: ${provider} stream broke after the first token (${errorMessage(error)})`);
-    emit(CUT_OFF_NOTE);
-    return { text, provider, model, cached: false, cacheId: null, citations: cache?.citations ?? [] };
-  };
-
-  let provider: Provider = "groq";
-  let model = GROQ_MODEL;
-  try {
-    await streamGroq(opts.system, opts.prompt, maxTokens, emit);
-  } catch (error) {
-    if (text) return cutOff(provider, model, error);
-    if (!(error instanceof RetryableError)) throw error;
-    console.warn(`llm: Groq failed, falling back to Gemini (${error.message})`);
-    provider = "gemini";
-    model = GEMINI_MODEL;
+  for (const [i, step] of CHAIN.entries()) {
     try {
-      await streamGemini(opts.system, opts.prompt, maxTokens, emit);
-    } catch (fallbackError) {
-      if (text) return cutOff(provider, model, fallbackError);
-      if (!(fallbackError instanceof RetryableError)) throw fallbackError;
-      console.warn(`llm: Gemini failed too (${fallbackError.message})`);
-      throw new LLMBusyError();
+      debugFail(step);
+      if (step.provider === "groq") await streamGroq(step, opts.system, opts.prompt, maxTokens, emit);
+      else await streamGemini(step.model, opts.system, opts.prompt, maxTokens, emit);
+    } catch (error) {
+      if (text) {
+        console.warn(`llm: ${step.model} stream broke after the first token (${errorMessage(error)})`);
+        emit(CUT_OFF_NOTE);
+        return { text, provider: step.provider, model: step.model, cached: false, cacheId: null, citations: cache?.citations ?? [] };
+      }
+      if (!(error instanceof RetryableError)) throw error;
+      logFallback(i, error);
+      continue;
     }
+    if (!text.trim()) {
+      logFallback(i, new RetryableError(`${step.model} returned no text`));
+      continue;
+    }
+    const citations = cache?.citations ?? [];
+    let cacheId: number | null = null;
+    if (cache && cacheKey) {
+      cacheId = await writeCache(cacheKey, cache.question, text, citations, step.provider, step.model, cache.promptVersion);
+    }
+    return { text, provider: step.provider, model: step.model, cached: false, cacheId, citations };
   }
-  if (!text.trim()) throw new LLMBusyError();
+  throw new LLMBusyError();
+}
 
-  const citations = cache?.citations ?? [];
-  let cacheId: number | null = null;
-  if (cache && cacheKey) {
-    cacheId = await writeCache(cacheKey, cache.question, text, citations, provider, model, cache.promptVersion);
-  }
-  return { text, provider, model, cached: false, cacheId, citations };
+function logFallback(i: number, error: Error) {
+  const next = CHAIN[i + 1];
+  console.warn(
+    next
+      ? `llm: ${CHAIN[i].model} failed, trying ${next.model} (${error.message})`
+      : `llm: ${CHAIN[i].model} failed too, no provider left (${error.message})`,
+  );
 }
 
 function makeCacheKey(promptVersion: string, scope: string | undefined, question: string) {
@@ -215,33 +221,31 @@ async function writeCache(
   }
 }
 
-async function callGroq(system: string, prompt: string, maxTokens: number): Promise<string> {
-  debugFail("groq");
+async function callGroq({ model, reasoning }: Step, system: string, prompt: string, maxTokens: number): Promise<string> {
   const response = await post(
     "Groq",
     "https://api.groq.com/openai/v1/chat/completions",
     { Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
     {
-      model: GROQ_MODEL,
+      model,
       messages: [
         { role: "system", content: system },
         { role: "user", content: prompt },
       ],
-      reasoning_effort: "low",
+      reasoning_effort: reasoning ?? "low",
       temperature: 0.2,
       max_completion_tokens: maxTokens,
     },
   );
   const text = response?.choices?.[0]?.message?.content;
-  if (typeof text !== "string" || !text.trim()) throw new RetryableError("Groq returned no text");
+  if (typeof text !== "string" || !text.trim()) throw new RetryableError(`${model} returned no text`);
   return text;
 }
 
-async function callGemini(system: string, prompt: string, maxTokens: number): Promise<string> {
-  debugFail("gemini");
+async function callGemini(model: string, system: string, prompt: string, maxTokens: number): Promise<string> {
   const response = await post(
     "Gemini",
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
     {
       systemInstruction: { parts: [{ text: system }] },
@@ -254,23 +258,28 @@ async function callGemini(system: string, prompt: string, maxTokens: number): Pr
     .filter((part) => !part.thought && typeof part.text === "string")
     .map((part) => part.text)
     .join("");
-  if (!text.trim()) throw new RetryableError("Gemini returned no text");
+  if (!text.trim()) throw new RetryableError(`${model} returned no text`);
   return text;
 }
 
-async function streamGroq(system: string, prompt: string, maxTokens: number, emit: (text: string) => void) {
-  debugFail("groq");
+async function streamGroq(
+  { model, reasoning }: Step,
+  system: string,
+  prompt: string,
+  maxTokens: number,
+  emit: (text: string) => void,
+) {
   await streamSSE(
     "Groq",
     "https://api.groq.com/openai/v1/chat/completions",
     { Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
     {
-      model: GROQ_MODEL,
+      model,
       messages: [
         { role: "system", content: system },
         { role: "user", content: prompt },
       ],
-      reasoning_effort: "low",
+      reasoning_effort: reasoning ?? "low",
       temperature: 0.2,
       max_completion_tokens: maxTokens,
       stream: true,
@@ -284,11 +293,16 @@ async function streamGroq(system: string, prompt: string, maxTokens: number, emi
   );
 }
 
-async function streamGemini(system: string, prompt: string, maxTokens: number, emit: (text: string) => void) {
-  debugFail("gemini");
+async function streamGemini(
+  model: string,
+  system: string,
+  prompt: string,
+  maxTokens: number,
+  emit: (text: string) => void,
+) {
   await streamSSE(
     "Gemini",
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
     { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
     {
       systemInstruction: { parts: [{ text: system }] },
@@ -407,12 +421,13 @@ async function request(
   throw new Error(`${name} HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
 }
 
-// Dev only: LLM_DEBUG_FAIL=groq|both makes that provider act as if rate-limited.
-function debugFail(provider: Provider) {
+// Dev only: LLM_DEBUG_FAIL makes chain steps act as if rate-limited. A comma list of step ids
+// (groq, groq-backup, gemini), e.g. "groq" or "groq,groq-backup", or "all".
+function debugFail(step: Step) {
   if (process.env.NODE_ENV === "production") return;
-  const mode = process.env.LLM_DEBUG_FAIL;
-  if (mode === "both" || mode === provider) {
-    throw new RetryableError(`${provider} HTTP 429 (simulated by LLM_DEBUG_FAIL)`);
+  const ids = (process.env.LLM_DEBUG_FAIL ?? "").split(",").map((s) => s.trim());
+  if (ids.includes("all") || ids.includes(step.id)) {
+    throw new RetryableError(`${step.model} HTTP 429 (simulated by LLM_DEBUG_FAIL)`);
   }
 }
 

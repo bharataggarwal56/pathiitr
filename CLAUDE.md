@@ -23,8 +23,9 @@ Cross-track content: internship experiences doc (pre-season tips, test experienc
 ## Stack
 - Next.js (App Router, TypeScript), Tailwind, deployed on Vercel (free)
 - Supabase (free): Postgres, pgvector, Auth with Google login restricted to @iitr.ac.in emails
-- LLM: free tiers only (Rs 0 budget). Groq (primary) + Gemini free tier (fallback) behind one
-  `lib/llm.ts` wrapper; switch to the fallback automatically on 429 / rate-limit errors.
+- LLM: free tiers only (Rs 0 budget). One `lib/llm.ts` wrapper with a fallback chain:
+  Groq `openai/gpt-oss-120b` (primary) → Groq `qwen/qwen3.8-27b` (own rate limit) →
+  Gemini free tier (last resort); move to the next step automatically on 429 / rate-limit errors.
   Check both providers' current free limits in their consoles before relying on numbers.
 - Embeddings: computed locally (free), not via a paid API
 - Data scripts in Python under `scripts/` (extraction, OCR for scanned files, anonymisation,

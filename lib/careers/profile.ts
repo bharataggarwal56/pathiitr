@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { TRACKS, type Track } from "@/lib/chat-shared";
 import { parseInterests } from "@/lib/careers/interests";
 import { recommend, type Recommendation } from "@/lib/careers/recommend";
+import { parseSkillGap, type SkillGap } from "@/lib/careers/skillgap";
 import { checkAreaCoverage, parseSkillLevels, type MatrixRow, type SkillLevels } from "@/lib/careers/skills";
 
 // Reads and writes for the onboarding profile and the stored recommendation. Every call runs as
@@ -16,6 +17,7 @@ export type Profile = {
   skillLevels: SkillLevels;
   targetTracks: Track[];
   recommendation: Recommendation | null;
+  skillGap: SkillGap;
 };
 
 export function parseTracks(value: unknown): Track[] {
@@ -27,7 +29,7 @@ export function parseTracks(value: unknown): Track[] {
 export async function loadProfile(supabase: SupabaseClient): Promise<Profile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, study_year, branch, interests, skill_levels, target_tracks, recommendation, onboarded_at")
+    .select("id, study_year, branch, interests, skill_levels, target_tracks, recommendation, skill_gap, onboarded_at")
     .maybeSingle();
   if (error) throw error;
   if (!data?.onboarded_at) return null;
@@ -39,6 +41,7 @@ export async function loadProfile(supabase: SupabaseClient): Promise<Profile | n
     skillLevels: parseSkillLevels(data.skill_levels),
     targetTracks: parseTracks(data.target_tracks),
     recommendation: data.recommendation as Recommendation | null,
+    skillGap: parseSkillGap(data.skill_gap),
   };
 }
 

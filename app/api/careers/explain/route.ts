@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedSession } from "@/lib/auth";
+import { hasFigures } from "@/lib/careers/figures";
 import { loadProfile } from "@/lib/careers/profile";
 import type { Recommendation } from "@/lib/careers/recommend";
 import { BUSY_MESSAGE, LLMBusyError, generate } from "@/lib/llm";
@@ -27,11 +28,6 @@ function buildPrompt(rec: Recommendation, studyYear: number | null): string {
     })
     .join("\n\n");
   return `${year}${tracks}`;
-}
-
-// The explanation must not bring in figures of its own. Ordinals like "2nd year" are fine.
-function hasFigures(text: string): boolean {
-  return /\d/.test(text.replace(/\b[1-5](st|nd|rd|th)[- ]year\b/gi, ""));
 }
 
 // POST {inputHash} -> {explanation}. Writes the friendly explanation for the user's current

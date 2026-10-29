@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import OnboardingForm from "@/components/careers/OnboardingForm";
 import { loadProfile } from "@/lib/careers/profile";
@@ -25,6 +26,7 @@ export default function OnboardingPage() {
 
 // Prefills the form when the student is editing an existing profile.
 async function ProfileForm() {
+  await connection(); // the Supabase client reads the clock; keep it out of prefetch prerenders
   const profile = await loadProfile(await createClient());
   return <OnboardingForm initial={profile} />;
 }

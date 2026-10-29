@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react";
 import type { Recommendation } from "@/lib/careers/recommend";
+import { skillAnchor } from "@/lib/careers/skillgap";
 
 type ExplainState =
   | { status: "loading" }
@@ -90,7 +91,14 @@ export default function Recommendations({ recommendation }: { recommendation: Re
                 <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Next to learn</h3>
                 <ul className="mt-1 space-y-1 text-sm text-ink">
                   {t.gaps.map((g) => (
-                    <li key={g}>{g}</li>
+                    <li key={g}>
+                      <Link
+                        href={`/skill-gap?track=${encodeURIComponent(t.track)}#${skillAnchor(g)}`}
+                        className="hover:text-brand hover:underline"
+                      >
+                        {g}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
                 <Link

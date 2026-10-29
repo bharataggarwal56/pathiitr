@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
-import { Compass } from "lucide-react";
+import NoProfile from "@/components/careers/NoProfile";
 import Recommendations from "@/components/careers/Recommendations";
 import { currentRecommendation, loadMatrix, loadProfile } from "@/lib/careers/profile";
 import { createClient } from "@/lib/supabase/server";
@@ -26,29 +26,10 @@ export default function CareersPage() {
 }
 
 async function Matches() {
+  await connection(); // the Supabase client reads the clock; keep it out of prefetch prerenders
   const supabase = await createClient();
   const profile = await loadProfile(supabase);
   if (!profile) return <NoProfile />;
   const recommendation = await currentRecommendation(supabase, profile, await loadMatrix(supabase));
   return <Recommendations recommendation={recommendation} />;
-}
-
-function NoProfile() {
-  return (
-    <div className="flex flex-col items-start gap-4 rounded-xl border border-slate-200 bg-surface p-6 shadow-sm">
-      <Compass className="size-8 text-brand" aria-hidden />
-      <div>
-        <h2 className="text-lg font-semibold text-navy">Tell us about yourself first</h2>
-        <p className="mt-1 text-muted">
-          Takes about two minutes: your year, branch, interests and how comfortable you are with key skills.
-        </p>
-      </div>
-      <Link
-        href="/onboarding"
-        className="rounded-lg bg-accent px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-      >
-        Set up your profile
-      </Link>
-    </div>
-  );
 }

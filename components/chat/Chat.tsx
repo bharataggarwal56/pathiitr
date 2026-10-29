@@ -191,7 +191,7 @@ export default function Chat() {
                   </div>
                 )}
                 {turn.answer && (
-                  <SourceList sources={turn.sources} cited={citedNumbers(turn.answer)} anchor={`src-${turn.key}`} />
+                  <SourceList sources={turn.sources} cited={citedNumbers(turn.answer, turn.sources)} anchor={`src-${turn.key}`} />
                 )}
                 {turn.status === "done" && turn.messageId && (
                   <div className="mt-3 border-t border-slate-100 pt-2">

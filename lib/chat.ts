@@ -4,7 +4,7 @@ import { NOT_COVERED_MESSAGE, type Source, type Track } from "@/lib/chat-shared"
 
 // Server-side pieces of the chat: retrieval settings, the Hinglish rewrite and the answer prompt.
 
-export const PROMPT_VERSION = "chat-v2";
+export const PROMPT_VERSION = "chat-v3";
 export const MATCH_COUNT = 5;
 // Below this, the best chunk isn't about the question: answer "not covered" without the LLM.
 // From embed.py --search: on-topic questions score 0.83-0.91, off-topic ones 0.74-0.79.
@@ -55,22 +55,22 @@ export async function englishQuery(question: string): Promise<string> {
   }
 }
 
-// Group chunks by document in score order: one number per document.
-export function numberSources(chunks: MatchedChunk[]) {
-  const byDoc = new Map<string, { source: Source; chunks: MatchedChunk[] }>();
-  for (const chunk of chunks) {
-    let entry = byDoc.get(chunk.document_id);
-    if (!entry) {
-      entry = {
-        source: { n: byDoc.size + 1, title: chunk.display_title, kind: chunk.kind, tracks: chunk.tracks, places: [] },
-        chunks: [],
-      };
-      byDoc.set(chunk.document_id, entry);
+function place(chunk: MatchedChunk) {
+  return [chunk.heading, chunk.page_start ? `p.${chunk.page_start}` : null].filter(Boolean).join(", ");
+}
+
+// Each chunk is passage [k] (score order) in the prompt; sources group them by document.
+export function numberSources(chunks: MatchedChunk[]): Source[] {
+  const byDoc = new Map<string, Source>();
+  chunks.forEach((chunk, i) => {
+    let source = byDoc.get(chunk.document_id);
+    if (!source) {
+      source = { n: byDoc.size + 1, refs: [], title: chunk.display_title, kind: chunk.kind, tracks: chunk.tracks, places: [] };
+      byDoc.set(chunk.document_id, source);
     }
-    entry.chunks.push(chunk);
-    const place = [chunk.heading, chunk.page_start ? `p.${chunk.page_start}` : null].filter(Boolean).join(", ");
-    if (place && !entry.source.places.includes(place)) entry.source.places.push(place);
-  }
+    source.refs.push(i + 1);
+    if (place(chunk) && !source.places.includes(place(chunk))) source.places.push(place(chunk));
+  });
   return [...byDoc.values()];
 }
 
@@ -85,17 +85,10 @@ Rules:
 - Be concise: one short opening line, then at most 6 bullet points. Use **bold** sparingly. No headings or tables.
 - Don't talk about "the sources" or "the context"; just answer and cite.`;
 
-export function buildPrompt(
-  question: string,
-  searchQuery: string,
-  groups: ReturnType<typeof numberSources>,
-): string {
-  const blocks = groups.map(({ source, chunks }) => {
-    const parts = chunks.map((c) => {
-      const place = [c.heading, c.page_start ? `p.${c.page_start}` : null].filter(Boolean).join(", ");
-      return (place ? `(${place})\n` : "") + c.content.trim();
-    });
-    return `[${source.n}] ${source.title} (${source.tracks.join(", ")})\n${parts.join("\n…\n")}`;
+export function buildPrompt(question: string, searchQuery: string, chunks: MatchedChunk[]): string {
+  const blocks = chunks.map((c, i) => {
+    const where = place(c) ? ` - ${place(c)}` : "";
+    return `[${i + 1}] ${c.display_title} (${c.tracks.join(", ")})${where}\n${c.content.trim()}`;
   });
   const query = searchQuery !== question ? `\n(In English: ${searchQuery})` : "";
   return `Sources:\n\n${blocks.join("\n\n")}\n\nQuestion: ${question}${query}`;

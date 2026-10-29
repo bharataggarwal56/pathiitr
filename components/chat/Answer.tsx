@@ -1,23 +1,19 @@
 "use client";
 
 import ReactMarkdown, { type Components } from "react-markdown";
-import { normalizeCitations, type Source } from "@/lib/chat-shared";
+import { citeDocuments, type Source } from "@/lib/chat-shared";
 
-// "[2]" -> a markdown link to the source, so it can be drawn as a citation chip.
-// Numbers that aren't a real source are dropped rather than shown as broken citations.
-function linkCitations(text: string, numbers: Set<number>, anchor: string) {
-  return normalizeCitations(text).replace(/\[(\d+)\](?!\()/g, (_, n) =>
-    numbers.has(Number(n)) ? `[${n}](#${anchor}-${n})` : "",
-  );
+// "[2]" -> a markdown link to source 2, so it can be drawn as a citation chip.
+function linkCitations(text: string, sources: Source[], anchor: string) {
+  return citeDocuments(text, sources).replace(/\[(\d+)\](?!\()/g, (_, n) => `[${n}](#${anchor}-${n})`);
 }
 
 // Source numbers the answer actually cites.
-export function citedNumbers(text: string): number[] {
-  return [...normalizeCitations(text).matchAll(/\[(\d+)\]/g)].map((match) => Number(match[1]));
+export function citedNumbers(text: string, sources: Source[]): number[] {
+  return [...citeDocuments(text, sources).matchAll(/\[(\d+)\]/g)].map((match) => Number(match[1]));
 }
 
 export default function Answer({ text, sources, anchor }: { text: string; sources: Source[]; anchor: string }) {
-  const numbers = new Set(sources.map((s) => s.n));
   const components: Components = {
     p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
     ul: ({ children }) => <ul className="my-2 list-disc space-y-1.5 pl-5 marker:text-brand/60">{children}</ul>,
@@ -45,7 +41,7 @@ export default function Answer({ text, sources, anchor }: { text: string; source
 
   return (
     <div className="text-[0.95rem] leading-relaxed text-ink">
-      <ReactMarkdown components={components}>{linkCitations(text, numbers, anchor)}</ReactMarkdown>
+      <ReactMarkdown components={components}>{linkCitations(text, sources, anchor)}</ReactMarkdown>
     </div>
   );
 }

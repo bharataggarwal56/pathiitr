@@ -22,9 +22,20 @@ export function normalizeCitations(text: string): string {
   return text.replace(/【/g, "[").replace(/】/g, "]").replace(/\[(\d+)†[^\]]*\]/g, "[$1]");
 }
 
-// One cited document. Chunks from the same document share a number.
+// The prompt numbers each passage [k]; several passages can come from one document. Map every [k]
+// to its document's number, drop numbers that don't exist and collapse repeats like [2][2].
+export function citeDocuments(text: string, sources: Source[]): string {
+  const docOf = new Map(sources.flatMap((s) => s.refs.map((k) => [k, s.n] as const)));
+  return normalizeCitations(text)
+    .replace(/\[(\d+)\]/g, (_, k) => (docOf.has(Number(k)) ? `[${docOf.get(Number(k))}]` : ""))
+    .replace(/(\[\d+\])(?:\s*\1)+/g, "$1");
+}
+
+// One cited document, numbered in order of its best passage.
 export type Source = {
   n: number;
+  // Passage numbers [k] in the prompt that came from this document.
+  refs: number[];
   title: string;
   kind: string;
   tracks: string[];

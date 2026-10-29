@@ -19,7 +19,7 @@ import {
   NOT_COVERED_MESSAGE,
   RATE_LIMIT_MESSAGE,
   TRACKS,
-  normalizeCitations,
+  citeDocuments,
   type ChatEvent,
   type Track,
 } from "@/lib/chat-shared";
@@ -122,14 +122,13 @@ export async function POST(request: NextRequest) {
           );
         }
         const chunks = matched.filter((c) => c.similarity >= MIN_SIMILARITY);
-        const groups = numberSources(chunks);
-        const sources = groups.map((g) => g.source);
+        const sources = numberSources(chunks);
         send({ type: "sources", sources, conversationId });
 
         // 4. Answer from those chunks only (or say it's not covered, without calling the LLM).
         let answer = "";
         let meta: { provider: string; model: string | null; cacheId: number | null; cached: boolean };
-        if (groups.length === 0) {
+        if (chunks.length === 0) {
           answer = NOT_COVERED_MESSAGE;
           send({ type: "delta", text: answer });
           meta = { provider: "none", model: null, cacheId: null, cached: false };
@@ -138,7 +137,7 @@ export async function POST(request: NextRequest) {
           const result = await generateStream(
             {
               system: SYSTEM_PROMPT,
-              prompt: buildPrompt(question, searchQuery, groups),
+              prompt: buildPrompt(question, searchQuery, chunks),
               maxTokens: 1024,
               cache: {
                 question,
@@ -162,7 +161,7 @@ export async function POST(request: NextRequest) {
           .insert({
             conversation_id: conversationId,
             role: "assistant",
-            content: normalizeCitations(answer).slice(0, MAX_MESSAGE_CHARS),
+            content: citeDocuments(answer, sources).slice(0, MAX_MESSAGE_CHARS),
             citations: sources,
             provider: meta.provider,
             model: meta.model,

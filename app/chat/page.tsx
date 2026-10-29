@@ -1,5 +1,8 @@
-import ComingSoon from "@/components/ComingSoon";
+import type { Metadata } from "next";
+import Chat from "@/components/chat/Chat";
+
+export const metadata: Metadata = { title: "Chat | PathIITR" };
 
 export default function ChatPage() {
-  return <ComingSoon title="Chat" />;
+  return <Chat />;
 }

@@ -12,6 +12,8 @@ import {
   filterTracks,
   looksNonEnglish,
   numberSources,
+  unmatchedFigures,
+  FIGURES_NOTE,
   type MatchedChunk,
 } from "@/lib/chat";
 import {
@@ -153,6 +155,14 @@ export async function POST(request: NextRequest) {
             },
           );
           meta = { provider: result.provider, model: result.model, cacheId: result.cacheId, cached: result.cached };
+
+          // Every figure must appear in a passage the same line cites; otherwise warn under the answer.
+          const unmatched = unmatchedFigures(answer, chunks);
+          if (unmatched.length > 0) {
+            if (process.env.NODE_ENV !== "production") console.info(`chat: unmatched figures ${unmatched.join(", ")}`);
+            answer += FIGURES_NOTE;
+            send({ type: "delta", text: FIGURES_NOTE });
+          }
         }
 
         // 5. Save the answer so it can be rated.

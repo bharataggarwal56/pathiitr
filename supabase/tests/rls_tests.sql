@@ -66,7 +66,8 @@ begin
     insert into public.llm_cache (cache_key, question, answer, prompt_version)
     values (repeat('0', 64), 'test question', 'test answer', 'test');
 
-    insert into public.profiles (id, branch) values (ub, 'ECE');
+    insert into public.profiles (id, branch, skill_levels, recommendation)
+    values (ub, 'ECE', '{"dsa": 2, "analog": 3}', '{"version": 1, "top": []}');
     insert into public.conversations (id, user_id, title) values (ca, ua, 'A chat'), (cb, ub, 'B chat');
     insert into public.chat_messages (id, conversation_id, user_id, role, content) values
       (mau, ca, ua, 'user', 'question'),
@@ -148,6 +149,20 @@ begin
         ('Profiles: non-IITR user cannot create profile', 'G', 'insert into public.profiles (branch) values ($$ECE$$)', 'ERR:42501'),
         ('Profiles: password session cannot create profile', 'A_pw', 'insert into public.profiles (branch) values ($$ECE$$)', 'ERR:42501'),
         ('Profiles: anon cannot read', 'anon', 'select 1 from public.profiles', 'ERR:42501'),
+
+        -- Profiles: skill levels and recommendation (onboarding)
+        ('Profiles: A cannot see B skill levels', 'A', 'select 1 from public.profiles where skill_levels <> $${}$$', '0'),
+        ('Profiles: A cannot overwrite B recommendation', 'A',
+         'update public.profiles set recommendation = $${"version": 1}$$ where id = {B}', '0'),
+        ('Profiles: A creates own profile with levels', 'A',
+         'insert into public.profiles (skill_levels, recommendation) values ($${"sql": 1, "dsa": 3}$$, $${"version": 1}$$)', '1'),
+        ('Profiles: B updates own skill levels', 'B', 'update public.profiles set skill_levels = $${"sql": 0}$$ where id = {B}', '1'),
+        ('Profiles: skill_levels must be an object', 'B', 'update public.profiles set skill_levels = $$[1]$$ where id = {B}', 'ERR:23514'),
+        ('Profiles: skill level above 3 rejected', 'B', 'update public.profiles set skill_levels = $${"sql": 4}$$ where id = {B}', 'ERR:23514'),
+        ('Profiles: fractional skill level rejected', 'B', 'update public.profiles set skill_levels = $${"sql": 1.5}$$ where id = {B}', 'ERR:23514'),
+        ('Profiles: text skill level rejected', 'B', 'update public.profiles set skill_levels = $${"sql": "3"}$$ where id = {B}', 'ERR:23514'),
+        ('Profiles: odd skill area key rejected', 'B', 'update public.profiles set skill_levels = $${"Bad Key": 1}$$ where id = {B}', 'ERR:23514'),
+        ('Profiles: recommendation must be an object', 'B', 'update public.profiles set recommendation = $$"x"$$ where id = {B}', 'ERR:23514'),
 
         -- Conversations
         ('Conversations: A sees only own', 'A', 'select 1 from public.conversations', '1'),

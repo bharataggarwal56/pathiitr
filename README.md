@@ -70,11 +70,17 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    npx supabase@2 functions deploy embed --use-api --project-ref <your-project-ref>
    ```
 
-6. Run the dev server:
+6. Run the SQL migrations in `supabase/migrations/` in the Supabase SQL Editor, oldest first
+   (`20261029120000_initial_schema.sql`, then `20261029180000_profile_onboarding.sql`). After a
+   migration, paste `supabase/tests/rls_tests.sql` into the SQL Editor; row 0 should say all tests passed.
+
+7. Run the dev server:
 
    ```bash
    npm run dev
    ```
+
+   `npm test` runs the recommender's unit tests (`node --test`, Node 22.18+ for TypeScript type stripping).
 
 ## Python scripts
 

@@ -10,7 +10,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
 
 - Next.js (App Router, TypeScript) + Tailwind, deployed on Vercel
 - Supabase: Postgres, pgvector, Google login restricted to IITR accounts
-- LLM: Groq (primary) with Gemini as fallback, free tiers only
+- LLM: free tiers only; Groq gpt-oss-120b, then Groq qwen3.8-27b (separate rate limit), then Gemini as last resort
 - Embeddings computed locally
 - Python data scripts in `scripts/`
 
@@ -45,7 +45,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    | `NEXT_PUBLIC_SUPABASE_URL` | web app, loader scripts | `<your-supabase-project-url>` |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
    | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
-   | `LLM_DEBUG_FAIL` | optional, dev only: `groq` or `both` simulates rate limits in `lib/llm.ts` | unset |
+   | `LLM_DEBUG_FAIL` | optional, dev only: steps of the LLM chain that act as rate-limited, a comma list of `groq`, `groq-backup`, `gemini`, or `all` | unset |
    | `CHAT_RATE_LIMIT` | optional, dev only: questions per user per 10 minutes in `/api/chat` (default 15) | unset |
 
    In dev, `/api/llm-test?q=<question>` (login required) tries the LLM wrapper; it returns 404 in production.
@@ -54,8 +54,9 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
 
    - Providers → Google: enable it with the client ID/secret of a Google Cloud OAuth client whose
      authorized redirect URI is `https://<your-project-ref>.supabase.co/auth/v1/callback`.
-   - URL Configuration → Redirect URLs: add `http://localhost:3000/auth/callback`
-     (and `https://<your-vercel-domain>/auth/callback` once deployed).
+   - URL Configuration → Redirect URLs: add `http://localhost:3000/**`
+     (and `https://<your-vercel-domain>/**` once deployed). The `**` is needed because the callback
+     URL carries a `?next=` query; without a match Supabase silently sends you to the Site URL.
 
    Only `@iitr.ac.in` emails (including department addresses like `@ece.iitr.ac.in`) are let in;
    anyone else is signed out straight away. Every page except the landing page needs login.

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isAllowedEmail, safeNext } from "@/lib/auth";
+import { isAllowedSession, safeNext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 // Google sends the user back here (via Supabase) with a one-time code.
@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/?auth_error=failed", origin));
   }
 
-  if (!isAllowedEmail(data.user?.email)) {
+  // Check the verified token claims, not just the returned user object.
+  const { data: claimsData } = await supabase.auth.getClaims(data.session.access_token);
+  if (!claimsData || !isAllowedSession(claimsData.claims)) {
     await supabase.auth.signOut();
     return NextResponse.redirect(new URL("/?auth_error=domain", origin));
   }

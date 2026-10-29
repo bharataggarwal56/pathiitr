@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isAllowedEmail } from "@/lib/auth";
+import { isAllowedSession } from "@/lib/auth";
 
 // Pages anyone can see. Everything else needs an IITR login.
 function isPublicPath(pathname: string) {
@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
   };
 
   // Safety net: the callback already rejects these, but never keep a non-IITR session.
-  if (claims && !isAllowedEmail(claims.email)) {
+  if (claims && !isAllowedSession(claims)) {
     await supabase.auth.signOut();
     return redirectTo("/?auth_error=domain");
   }

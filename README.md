@@ -46,6 +46,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
    | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
    | `LLM_DEBUG_FAIL` | optional, dev only: `groq` or `both` simulates rate limits in `lib/llm.ts` | unset |
+   | `CHAT_RATE_LIMIT` | optional, dev only: questions per user per 10 minutes in `/api/chat` (default 15) | unset |
 
    In dev, `/api/llm-test?q=<question>` (login required) tries the LLM wrapper; it returns 404 in production.
 
@@ -59,7 +60,16 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    Only `@iitr.ac.in` emails (including department addresses like `@ece.iitr.ac.in`) are let in;
    anyone else is signed out straight away. Every page except the landing page needs login.
 
-5. Run the dev server:
+5. Deploy the `embed` Edge Function, which embeds chat questions with gte-small (the model
+   `scripts/embed.py` uses) and only serves logged-in IITR users. Log in once in a normal terminal
+   (the login needs an interactive shell), then deploy:
+
+   ```bash
+   npx supabase@2 login
+   npx supabase@2 functions deploy embed --use-api --project-ref <your-project-ref>
+   ```
+
+6. Run the dev server:
 
    ```bash
    npm run dev

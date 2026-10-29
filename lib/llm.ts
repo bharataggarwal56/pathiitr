@@ -5,11 +5,16 @@ import { containsPersonalInfo } from "@/lib/pii";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // One wrapper for every LLM call: Groq first, Gemini free tier as fallback, optional answer cache.
-// Models match scripts/structure.py.
+// Groq's model matches scripts/structure.py. Gemini differs on purpose: on the free tier
+// gemini-3.6-flash with minimal thinking gave the first token in 6-10 s, gemini-3.5-flash
+// (used by the batch scripts, where speed doesn't matter) in 25 s or more.
 const GROQ_MODEL = "openai/gpt-oss-120b";
-const GEMINI_MODEL = "gemini-3.5-flash";
+const GEMINI_MODEL = "gemini-3.6-flash";
+const GEMINI_THINKING = { thinkingLevel: "minimal" };
 const LLM_TIMEOUT_MS = 15_000;
-// Streaming: LLM_TIMEOUT_MS until the first event arrives, then this for the whole answer.
+// Gemini is the last resort and slower to start, so it gets longer before we give up.
+const GEMINI_TIMEOUT_MS = 25_000;
+// Streaming: the timeout above until the first event arrives, then this for the whole answer.
 const STREAM_TIMEOUT_MS = 60_000;
 const CUT_OFF_NOTE = "\n\n_(The answer was cut off. Please try again.)_";
 
@@ -241,7 +246,7 @@ async function callGemini(system: string, prompt: string, maxTokens: number): Pr
     {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens },
+      generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens, thinkingConfig: GEMINI_THINKING },
     },
   );
   const parts: { text?: string; thought?: boolean }[] = response?.candidates?.[0]?.content?.parts ?? [];
@@ -288,7 +293,7 @@ async function streamGemini(system: string, prompt: string, maxTokens: number, e
     {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens },
+      generationConfig: { temperature: 0.2, maxOutputTokens: maxTokens, thinkingConfig: GEMINI_THINKING },
     },
     (event) => {
       const parts: { text?: string; thought?: boolean }[] = event?.candidates?.[0]?.content?.parts ?? [];
@@ -299,8 +304,13 @@ async function streamGemini(system: string, prompt: string, maxTokens: number, e
   );
 }
 
+// How long to wait for a provider's reply (or first streamed event) before giving up on it.
+function firstReplyTimeout(name: string) {
+  return name === "Gemini" ? GEMINI_TIMEOUT_MS : LLM_TIMEOUT_MS;
+}
+
 // POST JSON and read a server-sent-events reply, calling onEvent with each parsed `data:` line.
-// Times out if nothing arrives within LLM_TIMEOUT_MS, or the whole stream takes over
+// Times out if nothing arrives within firstReplyTimeout(name), or the whole stream takes over
 // STREAM_TIMEOUT_MS. Network errors and timeouts while reading are retryable.
 async function streamSSE(
   name: string,
@@ -311,7 +321,10 @@ async function streamSSE(
   onEvent: (event: any) => void,
 ) {
   const firstEvent = new AbortController();
-  const timer = setTimeout(() => firstEvent.abort(new DOMException("first event", "TimeoutError")), LLM_TIMEOUT_MS);
+  const timer = setTimeout(
+    () => firstEvent.abort(new DOMException("first event", "TimeoutError")),
+    firstReplyTimeout(name),
+  );
   const signal = AbortSignal.any([firstEvent.signal, AbortSignal.timeout(STREAM_TIMEOUT_MS)]);
   try {
     const response = await request(name, url, headers, body, signal);
@@ -354,7 +367,7 @@ async function streamSSE(
 // thrown as is. Logs and errors carry the status only, never the prompt or keys.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function post(name: string, url: string, headers: Record<string, string>, body: unknown): Promise<any> {
-  const response = await request(name, url, headers, body, AbortSignal.timeout(LLM_TIMEOUT_MS));
+  const response = await request(name, url, headers, body, AbortSignal.timeout(firstReplyTimeout(name)));
   return response.json();
 }
 
@@ -406,7 +419,7 @@ function debugFail(provider: Provider) {
 // "timed out after 15s", or the network error with its cause (e.g. "fetch failed: ECONNRESET").
 function describeFetchError(error: unknown) {
   if (!(error instanceof Error)) return "network error";
-  if (error.name === "TimeoutError") return `timed out after ${LLM_TIMEOUT_MS / 1000}s`;
+  if (error.name === "TimeoutError") return "timed out";
   const cause = error.cause as { code?: string; message?: string } | undefined;
   const detail = cause?.code ?? cause?.message;
   return `${error.name}: ${error.message}${detail ? ` (${detail})` : ""}`;

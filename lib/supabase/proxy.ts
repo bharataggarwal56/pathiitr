@@ -4,7 +4,7 @@ import { isAllowedSession } from "@/lib/auth";
 
 // Pages anyone can see. Everything else needs an IITR login.
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname.startsWith("/auth/");
+  return pathname === "/" || pathname === "/privacy" || pathname.startsWith("/auth/");
 }
 
 // Refreshes the Supabase auth session cookie on every matched request

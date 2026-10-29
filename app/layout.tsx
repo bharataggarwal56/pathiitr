@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import Header from "@/components/Header";
 import stats from "@/lib/site-stats.json";
 import "./globals.css";
@@ -43,6 +44,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <p>A student project for ECC-399, IIT Roorkee.</p>
             <p className="flex gap-4">
               <span>Data updated {formatDate(stats.generated)}</span>
+              <Link href="/privacy" className="text-brand underline-offset-2 hover:underline">
+                Privacy
+              </Link>
               <a
                 href="https://github.com/bharataggarwal56/pathiitr"
                 className="text-brand underline-offset-2 hover:underline"

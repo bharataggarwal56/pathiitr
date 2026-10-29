@@ -36,6 +36,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    NEXT_PUBLIC_SUPABASE_URL=<your-supabase-project-url>
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-supabase-publishable-key>
    SUPABASE_SECRET_KEY=<your-supabase-secret-key>
+   NEXT_PUBLIC_SUPPORT_EMAIL=<your-support-email>
    ```
 
    | Variable | Used by | Placeholder |
@@ -45,6 +46,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    | `NEXT_PUBLIC_SUPABASE_URL` | web app, loader scripts | `<your-supabase-project-url>` |
    | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | web app (browser-safe) | `<your-supabase-publishable-key>` |
    | `SUPABASE_SECRET_KEY` | server-side code and loader scripts only | `<your-supabase-secret-key>` |
+   | `NEXT_PUBLIC_SUPPORT_EMAIL` | contact line on `/privacy` (falls back to the GitHub repo if unset) | `<your-support-email>` |
    | `LLM_DEBUG_FAIL` | optional, dev only: steps of the LLM chain that act as rate-limited, a comma list of `groq`, `groq-backup`, `gemini`, or `all` | unset |
    | `CHAT_RATE_LIMIT` | optional, dev only: questions per user per 10 minutes in `/api/chat` (default 15) | unset |
 

@@ -4,7 +4,7 @@ import { NOT_COVERED_MESSAGE, normalizeCitations, type Source, type Track } from
 
 // Server-side pieces of the chat: retrieval settings, the Hinglish rewrite and the answer prompt.
 
-export const PROMPT_VERSION = "chat-v9";
+export const PROMPT_VERSION = "chat-v10";
 export const MATCH_COUNT = 5;
 // Below this, the best chunk isn't about the question: answer "not covered" without the LLM.
 // From embed.py --search: on-topic questions score 0.83-0.91, off-topic ones 0.74-0.79.
@@ -100,9 +100,6 @@ const FORMAT_REMINDER =
   'Format: every bullet ends with its own source number, e.g. "- Practise mock interviews with a friend [2]". ' +
   "Do not mention the sources or the context in the text.";
 
-export const FIGURES_NOTE =
-  "\n\n_Some figures above couldn't be matched to the sources. Please check the cited documents._";
-
 const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 
 function numbersIn(text: string): string[] {
@@ -123,4 +120,14 @@ export function unmatchedFigures(answer: string, chunks: MatchedChunk[]): string
     unmatched.push(...figures.filter((n) => !known.has(n)));
   }
   return unmatched;
+}
+
+// True if a line mentions a CGPA, stipend or eligibility criterion together with a number.
+const ELIGIBILITY = /\b(cgpa|cpi|gpa|stipends?|eligib\w*|cut-?offs?|ctc|lpa)\b/i;
+
+export function hasEligibilityFigure(answer: string): boolean {
+  return normalizeCitations(answer)
+    .split("\n")
+    .map((line) => line.replace(/\[\d+\]/g, ""))
+    .some((line) => ELIGIBILITY.test(line) && /\d/.test(line));
 }

@@ -11,9 +11,9 @@ import {
   englishQuery,
   filterTracks,
   looksNonEnglish,
+  hasEligibilityFigure,
   numberSources,
   unmatchedFigures,
-  FIGURES_NOTE,
   type MatchedChunk,
 } from "@/lib/chat";
 import {
@@ -21,6 +21,8 @@ import {
   NOT_COVERED_MESSAGE,
   RATE_LIMIT_MESSAGE,
   TRACKS,
+  ELIGIBILITY_NOTE,
+  FIGURES_NOTE,
   citeDocuments,
   type ChatEvent,
   type Track,
@@ -162,6 +164,10 @@ export async function POST(request: NextRequest) {
             if (process.env.NODE_ENV !== "production") console.info(`chat: unmatched figures ${unmatched.join(", ")}`);
             answer += FIGURES_NOTE;
             send({ type: "delta", text: FIGURES_NOTE });
+          }
+          if (hasEligibilityFigure(answer)) {
+            answer += ELIGIBILITY_NOTE;
+            send({ type: "delta", text: ELIGIBILITY_NOTE });
           }
         }
 

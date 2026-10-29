@@ -15,9 +15,8 @@ export async function signInWithGoogle(next = "/chat") {
   });
 }
 
-// Header control: "Sign in" when signed out, email + "Sign out" when signed in.
-export default function AuthButton() {
-  const router = useRouter();
+// The signed-in user's email (null when signed out). `ready` is false until the first check finishes.
+export function useAuthEmail() {
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -34,6 +33,14 @@ export default function AuthButton() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  return { email, ready };
+}
+
+// Header control: "Sign in" when signed out, email + "Sign out" when signed in.
+export default function AuthButton() {
+  const router = useRouter();
+  const { email, ready } = useAuthEmail();
+
   async function signOut() {
     await createClient().auth.signOut();
     router.push("/");
@@ -46,7 +53,7 @@ export default function AuthButton() {
     return (
       <button
         onClick={() => signInWithGoogle()}
-        className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-navy hover:bg-brand-tint"
+        className="rounded-md bg-accent px-3.5 py-1.5 text-sm font-semibold text-navy hover:bg-accent-light"
       >
         Sign in
       </button>
@@ -55,7 +62,7 @@ export default function AuthButton() {
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="max-w-40 truncate text-white/75" title={email}>
+      <span className="hidden max-w-48 truncate text-white/75 sm:inline" title={email}>
         {email}
       </span>
       <button

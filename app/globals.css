@@ -11,6 +11,15 @@
   --color-ink: #1e293b;
   --color-muted: #64748b;
   --color-accent: #e8a33d;
+  --color-accent-light: #f2bb63;
+}
+
+/* Centred content column shared by the header, footer and pages. */
+@utility page-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding-inline: 1rem;
 }
 
 @theme inline {

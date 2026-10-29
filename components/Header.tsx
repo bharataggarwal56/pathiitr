@@ -10,15 +10,22 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="bg-navy text-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/" className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-navy text-white shadow-md shadow-navy/20">
+      {/* Mobile: logo + sign-in on one row, nav scrolls underneath. Desktop: all on one row. */}
+      <div className="page-container flex flex-wrap items-center justify-between gap-x-6 pt-3 sm:flex-nowrap sm:py-2.5">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        >
           <span className="rounded-full bg-white p-0.5">
-            <Image src="/iitr-logo.png" alt="IIT Roorkee logo" width={36} height={36} priority />
+            <Image src="/iitr-logo.png" alt="IIT Roorkee logo" width={34} height={34} priority />
           </span>
-          <span className="text-xl font-semibold tracking-tight">PathIITR</span>
+          <span className="text-lg font-semibold tracking-tight">PathIITR</span>
         </Link>
-        <nav className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+        <div className="sm:order-last">
+          <AuthButton />
+        </div>
+        <nav className="-mx-4 mt-1 w-[calc(100%+2rem)] overflow-x-auto px-2 [scrollbar-width:none] sm:mx-0 sm:mt-0 sm:ml-auto sm:w-auto sm:px-0">
           <ul className="flex gap-1 whitespace-nowrap text-sm">
             {NAV_ITEMS.map(({ href, label }) => {
               const active = pathname === href;
@@ -39,7 +46,6 @@ export default function Header() {
             })}
           </ul>
         </nav>
-        <AuthButton />
       </div>
     </header>
   );

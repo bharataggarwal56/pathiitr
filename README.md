@@ -81,6 +81,8 @@ Pipeline order: `python scripts/inventory.py`, `python scripts/extract.py`, then
 After `python scripts/structure.py`, run `python scripts/embed.py` to chunk and embed the clean documents
 into `data/work/chunks.jsonl` (the gte-small model, ~130 MB, downloads once into `~/.cache/huggingface`).
 `python scripts/embed.py --search "<question>"` prints the top matching chunks.
+`python scripts/site_stats.py` refreshes the landing-page counts in `lib/site-stats.json` (counts only, committed,
+since Vercel can't see `data/`); re-run it and commit after the data changes.
 
 Scripts read keys from `.env.local` (see the table above).
 

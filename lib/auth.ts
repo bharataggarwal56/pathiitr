@@ -10,6 +10,7 @@ export function isAllowedEmail(email?: string | null): boolean {
 
 // A session is allowed only if Google vouched for the email: the account is linked to Google
 // and this session was created by OAuth (not, say, an email/password sign-up).
+// Copied in supabase/functions/embed/index.ts and is_iitr_user() in SQL. Keep all three in sync.
 export function isAllowedSession(claims: JwtPayload): boolean {
   const viaGoogle = claims.app_metadata?.providers?.includes("google") ?? false;
   const viaOAuth = (claims.amr ?? []).some(

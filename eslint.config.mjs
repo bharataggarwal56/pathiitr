@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".venv/**",
     "data/**",
     "scripts/**",
+    // Edge Functions run on Deno, not Next.js.
+    "supabase/functions/**",
   ]),
 ]);
 

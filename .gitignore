@@ -34,3 +34,6 @@ __pycache__/
 
 # Playwright MCP screenshots/snapshots
 .playwright-mcp/
+
+# Supabase CLI local state (project ref, versions)
+supabase/.temp/

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -36,18 +37,36 @@ export function useAuthEmail() {
   return { email, ready };
 }
 
-// Header control: "Sign in" when signed out, email + "Sign out" when signed in.
+// Header control: "Sign in" when signed out, an account menu (initial circle) when signed in.
 export default function AuthButton() {
   const router = useRouter();
   const { email, ready } = useAuthEmail();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Close on outside tap/click and Escape (the Profile link closes it itself).
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   async function signOut() {
+    setOpen(false);
     await createClient().auth.signOut();
     router.push("/");
     router.refresh();
   }
 
-  if (!ready) return <div className="h-8 w-20" aria-hidden />;
+  if (!ready) return <div className="size-9" aria-hidden />;
 
   if (!email) {
     return (
@@ -60,17 +79,31 @@ export default function AuthButton() {
     );
   }
 
+  const item = "block w-full px-4 py-3 text-left text-sm text-ink hover:bg-brand-tint";
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="hidden max-w-48 truncate text-white/75 sm:inline" title={email}>
-        {email}
-      </span>
+    <div ref={box} className="relative">
       <button
-        onClick={signOut}
-        className="rounded-md border border-white/30 px-3 py-1.5 text-white hover:bg-navy-light"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex size-9 items-center justify-center rounded-full bg-accent text-base font-semibold uppercase text-navy ring-2 ring-white/30 hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
-        Sign out
+        {email[0]}
       </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-lg border border-slate-200 bg-surface shadow-lg">
+          <p className="truncate border-b border-slate-100 px-4 py-2.5 text-xs text-muted" title={email}>
+            {email}
+          </p>
+          <Link href="/profile" role="menuitem" className={item} onClick={() => setOpen(false)}>
+            Profile
+          </Link>
+          <button role="menuitem" onClick={signOut} className={`${item} border-t border-slate-100`}>
+            Sign out
+          </button>
+        </div>
+      )}
     </div>
   );
 }

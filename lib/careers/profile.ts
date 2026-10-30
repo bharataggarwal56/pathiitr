@@ -18,6 +18,7 @@ export type Profile = {
   targetTracks: Track[];
   recommendation: Recommendation | null;
   skillGap: SkillGap;
+  updatedAt: string | null;
 };
 
 export function parseTracks(value: unknown): Track[] {
@@ -29,7 +30,7 @@ export function parseTracks(value: unknown): Track[] {
 export async function loadProfile(supabase: SupabaseClient): Promise<Profile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, study_year, branch, interests, skill_levels, target_tracks, recommendation, skill_gap, onboarded_at")
+    .select("id, study_year, branch, interests, skill_levels, target_tracks, recommendation, skill_gap, onboarded_at, updated_at")
     .maybeSingle();
   if (error) throw error;
   if (!data?.onboarded_at) return null;
@@ -42,6 +43,7 @@ export async function loadProfile(supabase: SupabaseClient): Promise<Profile | n
     targetTracks: parseTracks(data.target_tracks),
     recommendation: data.recommendation as Recommendation | null,
     skillGap: parseSkillGap(data.skill_gap),
+    updatedAt: data.updated_at ?? null,
   };
 }
 

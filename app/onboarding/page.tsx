@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Your profile | PathIITR" };
 
-export default function OnboardingPage() {
+export default function OnboardingPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   return (
     <div className="page-container max-w-3xl space-y-6 py-8">
       <div>
@@ -18,15 +18,16 @@ export default function OnboardingPage() {
         </p>
       </div>
       <Suspense fallback={<p className="text-muted">Loading your profile...</p>}>
-        <ProfileForm />
+        <ProfileForm searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
 // Prefills the form when the student is editing an existing profile.
-async function ProfileForm() {
+async function ProfileForm({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   await connection(); // the Supabase client reads the clock; keep it out of prefetch prerenders
   const profile = await loadProfile(await createClient());
-  return <OnboardingForm initial={profile} />;
+  const { from } = await searchParams;
+  return <OnboardingForm initial={profile} fromProfile={from === "profile"} />;
 }

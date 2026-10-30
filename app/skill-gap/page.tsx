@@ -98,7 +98,7 @@ async function Gap({ searchParams }: Props) {
       <ScrollToSkill key={track} />
 
       <Link
-        href="/onboarding"
+        href="/profile"
         className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-surface px-4 py-2 text-sm font-medium text-navy hover:border-brand"
       >
         <Pencil className="size-4" aria-hidden />

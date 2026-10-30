@@ -20,7 +20,7 @@ const CHIP =
 const SELECT =
   "w-full rounded-lg border border-slate-300 bg-surface px-3 py-2 text-ink focus-visible:outline-2 focus-visible:outline-brand";
 
-export default function OnboardingForm({ initial }: { initial: OnboardingInitial | null }) {
+export default function OnboardingForm({ initial, fromProfile = false }: { initial: OnboardingInitial | null; fromProfile?: boolean }) {
   const [state, formAction, pending] = useActionState<OnboardingState, FormData>(saveProfile, { error: null });
   const [targets, setTargets] = useState<Track[]>(initial?.targetTracks ?? []);
 
@@ -29,6 +29,7 @@ export default function OnboardingForm({ initial }: { initial: OnboardingInitial
 
   return (
     <form action={formAction} className="space-y-6">
+      {fromProfile && <input type="hidden" name="from" value="profile" />}
       <Section step={1} title="About you">
         <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
           <label className="block">
@@ -119,7 +120,7 @@ export default function OnboardingForm({ initial }: { initial: OnboardingInitial
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
         >
           {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {pending ? "Saving..." : "See my career matches"}
+          {pending ? "Saving..." : fromProfile ? "Save profile" : "See my career matches"}
         </button>
       </div>
       {state.error && (

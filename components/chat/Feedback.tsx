@@ -8,8 +8,8 @@ type Rating = 1 | -1;
 
 // Thumbs up/down on one saved answer, stored in message_feedback (RLS: own assistant messages only).
 // Clicking the chosen thumb again removes the rating.
-export default function Feedback({ messageId }: { messageId: string }) {
-  const [rating, setRating] = useState<Rating | null>(null);
+export default function Feedback({ messageId, initialRating = null }: { messageId: string; initialRating?: Rating | null }) {
+  const [rating, setRating] = useState<Rating | null>(initialRating);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
 

@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 export type OnboardingState = { error: string | null };
 
 // Saves the onboarding form to the user's own profile (RLS), stores the rule-based
-// recommendation, then opens /careers. Every field is checked against the fixed lists.
+// recommendation, then opens /careers (or /profile when the edit started there). Every field is checked against the fixed lists.
 export async function saveProfile(_: OnboardingState, form: FormData): Promise<OnboardingState> {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getClaims();
@@ -47,5 +47,5 @@ export async function saveProfile(_: OnboardingState, form: FormData): Promise<O
     console.error("[onboarding] save failed", (error as { message?: string })?.message ?? error);
     return { error: "Couldn't save your profile. Please try again." };
   }
-  redirect("/careers");
+  redirect(form.get("from") === "profile" ? "/profile" : "/careers");
 }

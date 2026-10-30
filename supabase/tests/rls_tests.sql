@@ -31,7 +31,9 @@ declare
   results jsonb := '[]';
   t record;
   stmt text;
+  steps text[];
   k text;
+  i int;
   cnt bigint;
   res text;
 begin
@@ -172,6 +174,16 @@ begin
         ('Conversations: A cannot hand own conversation to B', 'A', 'update public.conversations set user_id = {B} where id = {cA}', 'ERR:42501'),
         ('Conversations: A cannot delete B conversation', 'A', 'delete from public.conversations where id = {cB}', '0'),
         ('Conversations: A deletes own (cascades)', 'A', 'delete from public.conversations where id = {cA}', '1'),
+        -- "Clear chat history" deletes by user_id; with or without that filter only own rows go.
+        ('Clear history: A deletes all own conversations', 'A', 'delete from public.conversations where user_id = {A}', '1'),
+        ('Clear history: an unfiltered delete still only removes own rows', 'A', 'delete from public.conversations', '1'),
+        ('Clear history: A cannot delete B conversations by user_id', 'A', 'delete from public.conversations where user_id = {B}', '0'),
+        ('Clear history: cascade removes A messages', 'A',
+         'delete from public.conversations where user_id = {A} ;; select 1 from public.chat_messages', '0'),
+        ('Clear history: cascade removes A feedback', 'A',
+         'insert into public.message_feedback (message_id, rating) values ({mAa}, 1) ;; delete from public.conversations where user_id = {A} ;; select 1 from public.message_feedback', '0'),
+        ('Clear history: anon cannot delete conversations', 'anon', 'delete from public.conversations', 'ERR:42501'),
+        ('Clear history: non-IITR account deletes nothing', 'G', 'delete from public.conversations', '0'),
 
         -- Chat messages
         ('Messages: A sees only own', 'A', 'select 1 from public.chat_messages', '2'),
@@ -215,6 +227,12 @@ begin
       begin
         perform set_config('request.jwt.claims', t.claims::text, true);
         execute format('set local role %I', t.role);
+        -- "a ;; b ;; c" runs a and b first (same role), then tests c.
+        steps := string_to_array(stmt, ' ;; ');
+        stmt := steps[array_length(steps, 1)];
+        for i in 1 .. array_length(steps, 1) - 1 loop
+          execute steps[i];
+        end loop;
         if stmt ~* '^\s*select' then
           execute format('select count(*) from (%s) q', stmt) into cnt;
         else

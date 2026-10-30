@@ -31,6 +31,15 @@ export default function PrivacyPage() {
         </ul>
       </Section>
 
+      <Section title="Deleting your data">
+        <p>
+          On your <strong>Profile</strong> page (account menu, top right) you can <strong>Clear chat history</strong>,
+          which deletes your conversations, messages and feedback, or <strong>Delete my data</strong>, which also deletes
+          your profile and recommendations. Both happen immediately. Your Google sign-in account is not deleted; you can
+          sign in again and start fresh.
+        </p>
+      </Section>
+
       <Section title="What we never store">
         <ul className="list-disc space-y-1 pl-5">
           <li>Resumes. They are not kept.</li>
@@ -51,7 +60,7 @@ export default function PrivacyPage() {
 
       <Section title="Contact">
         <p>
-          Questions or want your data removed?{" "}
+          Questions, or want something removed that you can&apos;t delete yourself?{" "}
           {SUPPORT_EMAIL ? (
             <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-brand hover:underline">
               {SUPPORT_EMAIL}

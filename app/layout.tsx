@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         {/* Pages set their own width with `page-container`, so the home hero can run full width. */}
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-200 bg-surface">
+        <footer className="border-t border-slate-200 bg-surface print:hidden">
           <div className="page-container flex flex-col gap-1 py-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>A student project for ECC-399, IIT Roorkee.</p>
             <p className="flex gap-4">

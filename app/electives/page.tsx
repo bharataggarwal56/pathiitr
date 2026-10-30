@@ -99,7 +99,6 @@ async function Electives({ searchParams }: Props) {
         <Link href="/roadmap" className="font-medium text-navy hover:underline">
           Your semester plan
         </Link>
-        (coming soon)
       </p>
     </div>
   );

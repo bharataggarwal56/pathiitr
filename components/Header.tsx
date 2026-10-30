@@ -10,7 +10,7 @@ export default function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-navy text-white shadow-md shadow-navy/20">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-navy text-white shadow-md shadow-navy/20 print:hidden">
       {/* Mobile: logo + sign-in on one row, nav scrolls underneath. Desktop: all on one row. */}
       <div className="page-container flex flex-wrap items-center justify-between gap-x-6 pt-3 sm:flex-nowrap sm:py-2.5">
         <Link

@@ -244,6 +244,16 @@ def split_lines(lines, count, budget):
     return groups + [cur] if cur else groups
 
 
+def semester_number(year, semester):
+    """Year 3 Autumn -> 5, Year 3 Spring -> 6 (Autumn is the odd semester)."""
+    return 2 * year - (1 if semester == "Autumn" else 0)
+
+
+def ordinal(n):
+    """1 -> "1st", 5 -> "5th" (semesters only go up to 10)."""
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n, 'th') }"
+
+
 def curriculum_chunks(path, header, count, warnings):
     """Chunks from courses.json: one per semester, one (or more parts) per elective group."""
     try:
@@ -267,8 +277,10 @@ def curriculum_chunks(path, header, count, warnings):
         by_semester.setdefault((s["year"], s["semester"]), []).append(
             f"{s['slot']} {s['name']}, {s['credits']} credits, {slot}")
     for (year, semester), lines in sorted(by_semester.items(), key=lambda kv: (kv[0][0], kv[0][1] != "Autumn")):
-        heading = f"Year {year}, {semester} semester"
-        sections.append((heading, [f"{title}: {data['programme']}, {heading.lower()}"], lines))
+        # Students say "5th semester" or "sem 6", not "Year 3, Autumn", so both names go in.
+        n = semester_number(year, semester)
+        heading = f"Year {year}, {semester} semester (Semester {n}, {ordinal(n)} semester)"
+        sections.append((heading, [f"{title}: {data['programme']}, {heading.lower()}, sem {n}"], lines))
 
     groups = {}
     for c in data["courses"]:

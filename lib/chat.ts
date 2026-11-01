@@ -4,7 +4,7 @@ import { NOT_COVERED_MESSAGE, normalizeCitations, type Source, type Track } from
 
 // Server-side pieces of the chat: retrieval settings, the Hinglish rewrite and the answer prompt.
 
-export const PROMPT_VERSION = "chat-v10";
+export const PROMPT_VERSION = "chat-v11";
 export const MATCH_COUNT = 5;
 // Below this, the best chunk isn't about the question: answer "not covered" without the LLM.
 // From embed.py --search: on-topic questions score 0.83-0.91, off-topic ones 0.74-0.79.

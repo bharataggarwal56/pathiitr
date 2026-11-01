@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import PageHeader from "@/components/PageHeader";
 
-export const metadata: Metadata = { title: "Privacy | PathIITR" };
+export const metadata: Metadata = { title: "Privacy" };
 
 // Set in .env.local and in Vercel; kept out of the public repo.
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
@@ -8,12 +9,10 @@ const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
 export default function PrivacyPage() {
   return (
     <div className="page-container space-y-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Privacy</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          PathIITR is a student project for ECC-399 at IIT Roorkee. This is what it does with your data.
-        </p>
-      </div>
+      <PageHeader
+        title="Privacy"
+        intro="PathIITR is a student project for ECC-399 at IIT Roorkee. This is what it does with your data."
+      />
 
       <Section title="Who can sign in">
         <p>

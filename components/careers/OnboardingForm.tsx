@@ -117,10 +117,10 @@ export default function OnboardingForm({ initial, fromProfile = false }: { initi
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
+          className="btn-primary btn-lg"
         >
           {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {pending ? "Saving..." : fromProfile ? "Save profile" : "See my career matches"}
+          {pending ? "Saving…" : fromProfile ? "Save profile" : "See my career matches"}
         </button>
       </div>
       {state.error && (
@@ -134,7 +134,7 @@ export default function OnboardingForm({ initial, fromProfile = false }: { initi
 
 function Section({ step, title, hint, children }: { step: number; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-surface p-4 shadow-sm sm:p-6">
+    <section className="card">
       <h2 className="flex items-center gap-3 text-lg font-semibold text-navy">
         <span className="grid size-7 shrink-0 place-items-center rounded-full bg-navy text-sm text-white">{step}</span>
         {title}

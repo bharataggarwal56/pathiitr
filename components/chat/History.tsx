@@ -66,7 +66,7 @@ export default function History({
                 setTarget(c);
                 dialog.current?.showModal();
               }}
-              className="absolute top-1.5 right-1.5 rounded-md p-2 text-muted hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-brand md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+              className="absolute top-1.5 right-1.5 rounded-md p-2 text-muted hover:bg-red-50 hover:text-red-700 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
             >
               <Trash2 className="size-4" aria-hidden />
             </button>
@@ -93,7 +93,7 @@ export default function History({
               type="button"
               disabled={pending}
               onClick={() => dialog.current?.close()}
-              className="rounded-lg border border-slate-300 bg-surface px-4 py-2.5 font-medium text-navy hover:border-brand disabled:opacity-60"
+              className="btn-secondary"
             >
               Cancel
             </button>
@@ -101,7 +101,7 @@ export default function History({
               type="button"
               disabled={pending}
               onClick={confirmDelete}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-700 px-4 py-2.5 font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+              className="btn bg-red-700 font-semibold text-white hover:bg-red-800"
             >
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Delete chat

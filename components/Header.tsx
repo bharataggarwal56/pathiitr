@@ -33,6 +33,7 @@ export default function Header() {
                 <li key={href}>
                   <Link
                     href={href}
+                    aria-current={active ? "page" : undefined}
                     className={`block border-b-2 px-2.5 py-2 sm:px-3 transition-colors ${
                       active
                         ? "border-accent text-white"

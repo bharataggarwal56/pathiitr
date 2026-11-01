@@ -41,7 +41,7 @@ export default function Feedback({ messageId, initialRating = null }: { messageI
         rating === value ? "bg-brand-tint text-brand" : "text-muted hover:bg-slate-100 hover:text-navy"
       }`}
     >
-      <Icon className="size-4" fill={rating === value ? "currentColor" : "none"} />
+      <Icon className="size-4" fill={rating === value ? "currentColor" : "none"} aria-hidden />
     </button>
   );
 

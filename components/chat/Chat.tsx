@@ -6,6 +6,8 @@ import { ArrowUp, History as HistoryIcon, Loader2, MessageSquarePlus, RotateCcw,
 import Answer, { SourceList, citedNumbers } from "@/components/chat/Answer";
 import Feedback from "@/components/chat/Feedback";
 import History from "@/components/chat/History";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import type { ConversationItem, SavedTurn } from "@/lib/chat-history";
 import {
   MAX_QUESTION_CHARS,
@@ -134,7 +136,7 @@ export default function Chat({
       >
         <div className="flex items-center justify-between border-b border-slate-100 p-4">
           <h2 className="text-lg font-semibold text-navy">History</h2>
-          <button type="button" onClick={() => drawer.current?.close()} aria-label="Close history" className="rounded-md p-2 text-muted hover:bg-slate-100">
+          <button type="button" onClick={() => drawer.current?.close()} aria-label="Close history" className="rounded-lg p-2 text-muted hover:bg-slate-100">
             <X className="size-5" aria-hidden />
           </button>
         </div>
@@ -157,13 +159,14 @@ export default function Chat({
       </dialog>
 
       <div className="flex min-w-0 max-w-3xl flex-1 flex-col">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-navy">Chat</h1>
+        <PageHeader
+          title="Chat"
+          actions={
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => drawer.current?.showModal()}
-              className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-surface px-2.5 py-1.5 text-sm text-navy hover:bg-brand-tint md:hidden"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-surface px-2.5 py-1.5 text-sm text-navy transition-colors hover:border-brand hover:bg-brand-tint md:hidden"
             >
               <HistoryIcon className="size-4" aria-hidden />
               History
@@ -173,7 +176,7 @@ export default function Chat({
               <select
                 value={track ?? ""}
                 onChange={(e) => setTrack((e.target.value || null) as Track | null)}
-                className="rounded-md border border-slate-300 bg-surface px-2 py-1.5 text-sm text-ink focus:border-brand focus:outline-none"
+                className="rounded-lg border border-slate-300 bg-surface px-2 py-1.5 text-sm text-ink"
               >
                 <option value="">All tracks</option>
                 {TRACKS.map((t) => (
@@ -185,7 +188,8 @@ export default function Chat({
             </label>
             <NewChatButton onClick={newChat} disabled={busy} className="md:hidden" />
           </div>
-        </div>
+          }
+        />
 
         {turns.length === 0 ? (
           <div className="mt-10 text-center">
@@ -200,7 +204,7 @@ export default function Chat({
                   key={q}
                   type="button"
                   onClick={() => ask(q)}
-                  className="rounded-lg border border-slate-200 bg-surface px-4 py-3 text-sm text-ink shadow-sm transition-colors hover:border-brand/40 hover:bg-brand-tint"
+                  className="rounded-lg border border-slate-200 bg-surface px-4 py-3 text-sm text-ink shadow-sm transition-colors hover:border-brand hover:bg-brand-tint"
                 >
                   {q}
                 </button>
@@ -227,24 +231,28 @@ export default function Chat({
                   ) : (
                     turn.status !== "error" && (
                       <p className="flex items-center gap-2 text-sm text-muted" role="status">
-                        <Loader2 className="size-4 animate-spin" />
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
                         {turn.status === "searching" ? "Searching seniors' notes…" : "Writing the answer…"}
                       </p>
                     )
                   )}
                   {turn.status === "error" && (
-                    <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-accent/15 px-3 py-2 text-sm text-navy">
-                      <span>{turn.error}</span>
-                      <button
-                        type="button"
-                        onClick={() => ask(turn.question, turn.track)}
-                        disabled={busy}
-                        className="flex items-center gap-1 font-medium text-brand hover:underline disabled:opacity-50"
-                      >
-                        <RotateCcw className="size-3.5" />
-                        Try again
-                      </button>
-                    </div>
+                    <StatusNote
+                      kind="error"
+                      action={
+                        <button
+                          type="button"
+                          onClick={() => ask(turn.question, turn.track)}
+                          disabled={busy}
+                          className="btn-secondary shrink-0"
+                        >
+                          <RotateCcw className="size-4" aria-hidden />
+                          Try again
+                        </button>
+                      }
+                    >
+                      {turn.error}
+                    </StatusNote>
                   )}
                   {turn.answer && (
                     <SourceList sources={turn.sources} cited={citedNumbers(turn.answer, turn.sources)} anchor={`src-${turn.key}`} />
@@ -268,7 +276,7 @@ export default function Chat({
           }}
           className="sticky bottom-0 mt-6 bg-page pt-2 pb-4"
         >
-          <div className="flex items-end gap-2 rounded-xl border border-slate-300 bg-surface p-2 shadow-sm focus-within:border-brand">
+          <div className="flex items-end gap-2 rounded-xl border border-slate-300 bg-surface p-2 shadow-sm focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/25">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -290,7 +298,7 @@ export default function Chat({
               aria-label="Send"
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white transition-colors hover:bg-navy disabled:bg-slate-300"
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
+              {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ArrowUp className="size-4" aria-hidden />}
             </button>
           </div>
           <p className="mt-1.5 px-1 text-xs text-muted">
@@ -308,7 +316,7 @@ function NewChatButton({ onClick, disabled, className = "" }: { onClick: () => v
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-1.5 rounded-md border border-slate-300 bg-surface px-2.5 py-1.5 text-sm whitespace-nowrap text-navy hover:bg-brand-tint disabled:opacity-50 ${className}`}
+      className={`flex items-center gap-1.5 rounded-lg border border-slate-300 bg-surface px-2.5 py-1.5 text-sm whitespace-nowrap text-navy transition-colors hover:border-brand hover:bg-brand-tint disabled:opacity-50 ${className}`}
     >
       <MessageSquarePlus className="size-4" aria-hidden />
       New chat

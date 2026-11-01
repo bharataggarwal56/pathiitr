@@ -3,29 +3,29 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { CalendarDays, Info } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import { TRACKS, type Track } from "@/lib/chat-shared";
 import { groupElectives, helpsTrack, type Elective } from "@/lib/careers/electives";
 import { currentRecommendation, loadMatrix, loadProfile } from "@/lib/careers/profile";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Electives | PathIITR" };
+export const metadata: Metadata = { title: "Electives" };
 
 type Props = { searchParams: Promise<{ track?: string | string[] }> };
 
 export default function ElectivesPage({ searchParams }: Props) {
   return (
     <div className="page-container space-y-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Electives</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Program electives, TEB baskets and open electives from the official curriculum, with the career tracks each one helps.
-        </p>
-      </div>
+      <PageHeader
+        title="Electives"
+        intro="Program electives, TEB baskets and open electives from the official curriculum, with the career tracks each one helps."
+      />
       <p className="flex items-start gap-2 rounded-lg border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-ink">
         <Info className="mt-0.5 size-4 shrink-0 text-navy" aria-hidden />
         Track suggestions are based on course titles; syllabi weren&apos;t available.
       </p>
-      <Suspense fallback={<p className="text-muted">Loading electives...</p>}>
+      <Suspense fallback={<StatusNote kind="loading">Loading electives…</StatusNote>}>
         <Electives searchParams={searchParams} />
       </Suspense>
     </div>
@@ -50,7 +50,7 @@ async function Electives({ searchParams }: Props) {
     .from("courses")
     .select("code, name, credits, elective_group, lists, tracks_helped, track_reason")
     .eq("category", "elective");
-  if (error) return <p className="text-muted">Couldn&apos;t load electives right now. Please try again shortly.</p>;
+  if (error) return <StatusNote kind="error">Couldn&apos;t load electives right now. Please try again shortly.</StatusNote>;
 
   const groups = groupElectives((data ?? []) as Elective[], track);
 
@@ -74,7 +74,7 @@ async function Electives({ searchParams }: Props) {
         ))}
       </nav>
 
-      {groups.length === 0 && <p className="text-muted">No electives found.</p>}
+      {groups.length === 0 && <StatusNote kind="empty">No electives found.</StatusNote>}
 
       {groups.map((g, i) => (
         <section key={g.id}>
@@ -94,12 +94,10 @@ async function Electives({ searchParams }: Props) {
         </section>
       ))}
 
-      <p className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-muted">
+      <Link href="/roadmap" className="btn-secondary">
         <CalendarDays className="size-4" aria-hidden />
-        <Link href="/roadmap" className="font-medium text-navy hover:underline">
-          Your semester plan
-        </Link>
-      </p>
+        Your semester plan
+      </Link>
     </div>
   );
 }
@@ -108,7 +106,7 @@ function CourseCard({ course: c, track }: { course: Elective; track: Track | nul
   const helps = helpsTrack(c, track);
   return (
     <li
-      className={`rounded-xl border p-4 shadow-sm ${
+      className={`rounded-xl border p-4 shadow-sm sm:p-5 ${
         helps ? "border-brand bg-brand-tint ring-1 ring-brand/30" : "border-slate-200 bg-surface"
       }`}
     >

@@ -4,7 +4,7 @@ import { Compass } from "lucide-react";
 // Shown on pages that need the onboarding profile when the student hasn't filled it in yet.
 export default function NoProfile() {
   return (
-    <div className="flex flex-col items-start gap-4 rounded-xl border border-slate-200 bg-surface p-6 shadow-sm">
+    <div className="card flex flex-col items-start gap-4">
       <Compass className="size-8 text-brand" aria-hidden />
       <div>
         <h2 className="text-lg font-semibold text-navy">Tell us about yourself first</h2>
@@ -14,7 +14,7 @@ export default function NoProfile() {
       </div>
       <Link
         href="/onboarding"
-        className="rounded-lg bg-accent px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        className="btn-primary btn-lg"
       >
         Set up your profile
       </Link>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Pencil } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import NoProfile from "@/components/careers/NoProfile";
 import DataControls from "@/components/profile/DataControls";
 import { BRANCHES, INTERESTS } from "@/lib/careers/interests";
@@ -10,13 +12,13 @@ import { currentRecommendation, loadMatrix, loadProfile, type Profile } from "@/
 import { SKILL_AREAS, SKILL_GROUPS, SKILL_LEVELS } from "@/lib/careers/skills";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Profile | PathIITR" };
+export const metadata: Metadata = { title: "Profile" };
 
 export default function ProfilePage() {
   return (
     <div className="page-container max-w-3xl space-y-6 py-8">
-      <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Your profile</h1>
-      <Suspense fallback={<p className="text-muted">Loading your profile...</p>}>
+      <PageHeader title="Your profile" />
+      <Suspense fallback={<StatusNote kind="loading">Loading your profile…</StatusNote>}>
         <ProfileSummary />
       </Suspense>
     </div>
@@ -37,7 +39,7 @@ async function ProfileSummary() {
         action={
           <Link
             href="/onboarding?from=profile"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-navy shadow-sm hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="btn-primary"
           >
             <Pencil className="size-4" aria-hidden />
             Edit profile
@@ -134,7 +136,7 @@ function Chips({ items, empty = "None picked" }: { items: string[]; empty?: stri
 
 function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
+    <section className="card">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-navy">{title}</h2>
         {action}

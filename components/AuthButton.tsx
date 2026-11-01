@@ -72,7 +72,7 @@ export default function AuthButton() {
     return (
       <button
         onClick={() => signInWithGoogle()}
-        className="rounded-md bg-accent px-3.5 py-1.5 text-sm font-semibold text-navy hover:bg-accent-light"
+        className="rounded-lg bg-accent px-3.5 py-1.5 text-sm font-semibold text-navy transition-colors hover:bg-accent-light"
       >
         Sign in
       </button>

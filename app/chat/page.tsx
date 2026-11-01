@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import StatusNote from "@/components/StatusNote";
 import Chat from "@/components/chat/Chat";
 import { listConversations, loadConversation } from "@/lib/chat-history";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Chat | PathIITR" };
+export const metadata: Metadata = { title: "Chat" };
 
 export default function ChatPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   return (
-    <Suspense fallback={<p className="page-container py-8 text-muted">Loading your chats...</p>}>
+    <Suspense
+      fallback={
+        <div className="page-container py-8">
+          <StatusNote kind="loading">Loading your chats…</StatusNote>
+        </div>
+      }
+    >
       <ChatLoader searchParams={searchParams} />
     </Suspense>
   );

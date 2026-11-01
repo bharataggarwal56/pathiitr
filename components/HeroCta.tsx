@@ -4,8 +4,7 @@ import Link from "next/link";
 import { LogIn, MessageSquareText } from "lucide-react";
 import { signInWithGoogle, useAuthEmail } from "@/components/AuthButton";
 
-const PRIMARY =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-5 py-3 font-semibold text-navy shadow-sm transition-colors hover:bg-accent-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+const PRIMARY = "btn-primary btn-lg";
 
 // Landing-page primary button: sign in when signed out, go to chat when signed in.
 export default function HeroCta() {

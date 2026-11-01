@@ -27,7 +27,7 @@ export default function AuthNotice() {
       <p className="text-ink">{message}</p>
       <button
         onClick={() => signInWithGoogle(next)}
-        className="shrink-0 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-navy"
+        className="btn-primary shrink-0"
       >
         Sign in with Google
       </button>

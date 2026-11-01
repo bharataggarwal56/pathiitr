@@ -47,7 +47,7 @@ export default function Recommendations({ recommendation }: { recommendation: Re
 
       <ol className="grid gap-4 md:grid-cols-3">
         {top.map((t, i) => (
-          <li key={t.track} className="flex flex-col rounded-xl border border-slate-200 bg-surface p-5 shadow-sm">
+          <li key={t.track} className="card flex flex-col">
             <div className="flex items-center gap-3">
               <span
                 className={`grid size-8 shrink-0 place-items-center rounded-full text-sm font-semibold ${
@@ -115,7 +115,7 @@ export default function Recommendations({ recommendation }: { recommendation: Re
 
       <Link
         href="/profile"
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-surface px-4 py-2 text-sm font-medium text-navy hover:border-brand"
+        className="btn-secondary"
       >
         <Pencil className="size-4" aria-hidden />
         Edit your profile
@@ -128,7 +128,7 @@ function Summary({ state, onRetry }: { state: ExplainState; onRetry: () => void 
   // An empty summary means the LLM's text failed our checks; the cards say it all anyway.
   if (state.status === "done" && !state.text) return null;
   return (
-    <section className="rounded-xl border-l-4 border-accent bg-surface p-5 shadow-sm">
+    <section className="rounded-xl border-l-4 border-accent bg-surface p-4 shadow-sm sm:p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted uppercase">
         <Sparkles className="size-4 text-accent" aria-hidden />
         In short
@@ -136,7 +136,7 @@ function Summary({ state, onRetry }: { state: ExplainState; onRetry: () => void 
       {state.status === "loading" && (
         <p className="mt-2 flex items-center gap-2 text-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Writing a short summary...
+          Writing a short summary…
         </p>
       )}
       {state.status === "error" && (
@@ -144,7 +144,7 @@ function Summary({ state, onRetry }: { state: ExplainState; onRetry: () => void 
           <p className="text-ink">{state.message}</p>
           <button
             onClick={onRetry}
-            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-navy"
+            className="btn-secondary shrink-0"
           >
             <RotateCcw className="size-4" aria-hidden />
             Try again

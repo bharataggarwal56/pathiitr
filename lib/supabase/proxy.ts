@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAllowedSession } from "@/lib/auth";
 
 // Pages anyone can see. Everything else needs an IITR login.
+// /opengraph-image is the home page's social preview, fetched by link-preview crawlers.
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname === "/privacy" || pathname.startsWith("/auth/");
+  return pathname === "/" || pathname === "/privacy" || pathname === "/opengraph-image" || pathname.startsWith("/auth/");
 }
 
 // Refreshes the Supabase auth session cookie on every matched request

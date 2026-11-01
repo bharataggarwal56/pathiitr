@@ -5,7 +5,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { clearChatHistory, deleteMyData, type DataState } from "@/app/profile/actions";
 
 const BTN =
-  "inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-60";
 
 // Two destructive actions, each behind a native <dialog> confirm.
 export default function DataControls() {
@@ -84,7 +84,7 @@ function Confirm({
         className={`${BTN} w-full sm:w-auto ${
           danger
             ? "border-red-300 bg-surface text-red-700 hover:bg-red-50"
-            : "border-slate-300 bg-surface text-navy hover:border-brand"
+            : "border-slate-300 bg-surface text-navy hover:border-brand hover:bg-brand-tint"
         }`}
       >
         <Trash2 className="size-4" aria-hidden />
@@ -113,7 +113,7 @@ function Confirm({
               type="button"
               disabled={pending}
               onClick={() => dialog.current?.close()}
-              className={`${BTN} border-slate-300 bg-surface text-navy hover:border-brand`}
+              className="btn-secondary"
             >
               Cancel
             </button>
@@ -121,7 +121,7 @@ function Confirm({
               type="button"
               disabled={pending}
               onClick={run}
-              className={`${BTN} border-transparent font-semibold text-white ${danger ? "bg-red-700 hover:bg-red-800" : "bg-brand hover:bg-navy-light"}`}
+              className={`${BTN} border-transparent font-semibold text-white ${danger ? "bg-red-700 hover:bg-red-800" : "bg-brand hover:bg-navy"}`}
             >
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
               {confirmLabel}

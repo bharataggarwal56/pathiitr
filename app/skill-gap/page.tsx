@@ -3,6 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ExternalLink, Pencil } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import NoProfile from "@/components/careers/NoProfile";
 import Priorities from "@/components/skill-gap/Priorities";
 import ScrollToSkill from "@/components/skill-gap/ScrollToSkill";
@@ -12,21 +14,18 @@ import { SKILL_GAP_VERSION, gapInputHash, skillAnchor } from "@/lib/careers/skil
 import { SKILL_LEVELS, trackSkillStatus, type SkillStatus } from "@/lib/careers/skills";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Skill gap | PathIITR" };
+export const metadata: Metadata = { title: "Skill gap" };
 
 type Props = { searchParams: Promise<{ track?: string | string[] }> };
 
 export default function SkillGapPage({ searchParams }: Props) {
   return (
     <div className="page-container space-y-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Your skill gap</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          The skills seniors list for a track, checked against the ratings in your profile, with the resources
-          from their documents.
-        </p>
-      </div>
-      <Suspense fallback={<p className="text-muted">Checking your skills...</p>}>
+      <PageHeader
+        title="Your skill gap"
+        intro="The skills seniors list for a track, checked against the ratings in your profile, with the resources from their documents."
+      />
+      <Suspense fallback={<StatusNote kind="loading">Checking your skills…</StatusNote>}>
         <Gap searchParams={searchParams} />
       </Suspense>
     </div>
@@ -99,7 +98,7 @@ async function Gap({ searchParams }: Props) {
 
       <Link
         href="/profile"
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-surface px-4 py-2 text-sm font-medium text-navy hover:border-brand"
+        className="btn-secondary"
       >
         <Pencil className="size-4" aria-hidden />
         Edit your skill ratings
@@ -131,7 +130,7 @@ function SkillGroup({ title, skills }: { title: string; skills: SkillStatus[] })
 function SkillRow({ skill: s }: { skill: SkillStatus }) {
   const status = STATUS[s.status];
   return (
-    <li id={skillAnchor(s.skill)} className="scroll-mt-24 rounded-xl border border-slate-200 bg-surface p-4 shadow-sm data-highlight:border-brand data-highlight:ring-2 data-highlight:ring-brand-tint">
+    <li id={skillAnchor(s.skill)} className="card scroll-mt-24 data-highlight:border-brand data-highlight:ring-2 data-highlight:ring-brand-tint">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-medium text-ink">{s.skill}</h3>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Info, Pencil } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import NoProfile from "@/components/careers/NoProfile";
 import PrintButton from "@/components/roadmap/PrintButton";
 import { TRACKS, type Track } from "@/lib/chat-shared";
@@ -12,21 +14,18 @@ import { skillAnchor } from "@/lib/careers/skillgap";
 import { trackSkillStatus, type SkillStatus } from "@/lib/careers/skills";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Roadmap | PathIITR" };
+export const metadata: Metadata = { title: "Roadmap" };
 
 type Props = { searchParams: Promise<{ track?: string | string[] }> };
 
 export default function RoadmapPage({ searchParams }: Props) {
   return (
     <div className="page-container space-y-6 py-8 print:py-0">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Your semester roadmap</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          From this semester to graduation: the curriculum&apos;s courses and elective slots, electives that fit your
-          track, and the skills from your gap list to work on each semester.
-        </p>
-      </div>
-      <Suspense fallback={<p className="text-muted">Building your roadmap...</p>}>
+      <PageHeader
+        title="Your semester roadmap"
+        intro="From this semester to graduation: the curriculum's courses and elective slots, electives that fit your track, and the skills from your gap list to work on each semester."
+      />
+      <Suspense fallback={<StatusNote kind="loading">Building your roadmap…</StatusNote>}>
         <Roadmap searchParams={searchParams} />
       </Suspense>
     </div>
@@ -55,7 +54,7 @@ async function Roadmap({ searchParams }: Props) {
     supabase.from("curriculum_slots").select("slot, name, year, semester, credits"),
   ]);
   if (core.error || electives.error || slots.error) {
-    return <p className="text-muted">Couldn&apos;t load the curriculum right now. Please try again shortly.</p>;
+    return <StatusNote kind="error">Couldn&apos;t load the curriculum right now. Please try again shortly.</StatusNote>;
   }
 
   const current = currentTerm(profile.studyYear, new Date());
@@ -103,7 +102,7 @@ async function Roadmap({ searchParams }: Props) {
       </p>
 
       {plan.length === 0 ? (
-        <p className="text-muted">No semesters left in the curriculum we have (it covers years 1 to 4).</p>
+        <StatusNote kind="empty">No semesters left in the curriculum we have (it covers years 1 to 4).</StatusNote>
       ) : (
         <ol className="space-y-4">
           {plan.map((s) => (
@@ -229,7 +228,7 @@ function EditProfile({ text }: { text: string }) {
       {text}
       <Link
         href="/profile"
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-surface px-4 py-2 font-medium text-navy hover:border-brand"
+        className="btn-secondary"
       >
         <Pencil className="size-4" aria-hidden />
         Edit your profile

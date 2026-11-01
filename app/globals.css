@@ -9,7 +9,7 @@
   --color-surface: #ffffff;
   --color-page: #f6f8fc;
   --color-ink: #1e293b;
-  --color-muted: #64748b;
+  --color-muted: #475569; /* slate-600: 4.5:1+ on page, white and brand-tint */
   --color-accent: #e8a33d;
   --color-accent-light: #f2bb63;
 }
@@ -22,6 +22,26 @@
   padding-inline: 1rem;
 }
 
+/* Buttons. Primary (amber, navy text) is the main action; secondary is the bordered white one.
+   Add btn-lg for the single big call to action on a screen. */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-accent font-semibold text-navy shadow-sm hover:bg-accent-light;
+}
+@utility btn-secondary {
+  @apply btn border border-slate-300 bg-surface text-navy hover:border-brand hover:bg-brand-tint;
+}
+@utility btn-lg {
+  @apply px-5 py-3 text-base;
+}
+
+/* The standard white card. Cards with a highlighted state set their own border colour instead. */
+@utility card {
+  @apply rounded-xl border border-slate-200 bg-surface p-4 shadow-sm sm:p-5;
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -30,4 +50,16 @@
 body {
   background: var(--color-page);
   color: var(--color-ink);
+}
+
+/* A visible keyboard focus ring everywhere (amber on the navy header and hero). Elements that set
+   their own focus-visible outline override this, since utilities come after the base layer. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  .bg-navy :focus-visible {
+    outline-color: var(--color-accent);
+  }
 }

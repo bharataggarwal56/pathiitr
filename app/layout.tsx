@@ -23,10 +23,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION = "Career and academic guidance for IIT Roorkee students, answered from seniors' experiences and the official curriculum.";
+
+// Pages set a short title ("Chat"); the template turns it into "Chat · PathIITR".
+// The social preview image comes from app/opengraph-image.tsx.
 export const metadata: Metadata = {
-  title: "PathIITR",
-  description: "Career and academic guidance for IIT Roorkee students.",
+  title: { default: "PathIITR", template: "%s · PathIITR" },
+  description: DESCRIPTION,
   icons: { icon: "/iitr-logo.png" },
+  openGraph: { title: "PathIITR", description: DESCRIPTION, siteName: "PathIITR", type: "website", locale: "en_IN" },
+  twitter: { card: "summary_large_image", title: "PathIITR", description: DESCRIPTION },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,9 +42,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full scroll-smooth antialiased motion-reduce:scroll-auto`}
     >
       <body className="flex min-h-full flex-col">
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-lg bg-accent px-4 py-2 font-semibold text-navy focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >
+          Skip to content
+        </a>
         <Header />
         {/* Pages set their own width with `page-container`, so the home hero can run full width. */}
-        <main className="flex-1">{children}</main>
+        <main id="main" className="flex-1 scroll-mt-28">{children}</main>
         <footer className="border-t border-slate-200 bg-surface print:hidden">
           <div className="page-container flex flex-col gap-1 py-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>A student project for ECC-399, IIT Roorkee.</p>

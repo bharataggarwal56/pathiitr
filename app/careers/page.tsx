@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import PageHeader from "@/components/PageHeader";
+import StatusNote from "@/components/StatusNote";
 import NoProfile from "@/components/careers/NoProfile";
 import Recommendations from "@/components/careers/Recommendations";
 import { currentRecommendation, loadMatrix, loadProfile } from "@/lib/careers/profile";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Careers | PathIITR" };
+export const metadata: Metadata = { title: "Careers" };
 
 export default function CareersPage() {
   return (
     <div className="page-container space-y-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-navy sm:text-3xl">Your career matches</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Each track is scored against the skills seniors say it needs, your interests and the tracks you
-          picked. These are suggestions to explore, not verdicts.
-        </p>
-      </div>
-      <Suspense fallback={<p className="text-muted">Working out your matches...</p>}>
+      <PageHeader
+        title="Your career matches"
+        intro="Each track is scored against the skills seniors say it needs, your interests and the tracks you picked. These are suggestions to explore, not verdicts."
+      />
+      <Suspense fallback={<StatusNote kind="loading">Working out your matches…</StatusNote>}>
         <Matches />
       </Suspense>
     </div>

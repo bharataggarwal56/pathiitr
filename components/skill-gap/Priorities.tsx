@@ -46,7 +46,7 @@ export default function Priorities({ track, inputHash, storedText, hasGaps }: Pr
 
   if (!hasGaps) {
     return (
-      <section className="rounded-xl border-l-4 border-accent bg-surface p-5 shadow-sm">
+      <section className="rounded-xl border-l-4 border-accent bg-surface p-4 shadow-sm sm:p-5">
         <p className="text-ink">You&apos;ve covered every skill seniors list for {track}. Nice work.</p>
       </section>
     );
@@ -55,7 +55,7 @@ export default function Priorities({ track, inputHash, storedText, hasGaps }: Pr
   if (state.status === "done" && !state.text) return null;
 
   return (
-    <section className="rounded-xl border-l-4 border-accent bg-surface p-5 shadow-sm">
+    <section className="rounded-xl border-l-4 border-accent bg-surface p-4 shadow-sm sm:p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted uppercase">
         <Sparkles className="size-4 text-accent" aria-hidden />
         What to learn first
@@ -63,7 +63,7 @@ export default function Priorities({ track, inputHash, storedText, hasGaps }: Pr
       {state.status === "loading" && (
         <p className="mt-2 flex items-center gap-2 text-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Working out an order...
+          Working out an order…
         </p>
       )}
       {state.status === "error" && (
@@ -71,7 +71,7 @@ export default function Priorities({ track, inputHash, storedText, hasGaps }: Pr
           <p className="text-ink">{state.message}</p>
           <button
             onClick={fetchPriorities}
-            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-navy"
+            className="btn-secondary shrink-0"
           >
             <RotateCcw className="size-4" aria-hidden />
             Try again

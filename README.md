@@ -1,18 +1,114 @@
 # PathIITR
 
-AI-assisted career and academic guidance for IIT Roorkee students, built for ECC-399 (ECE CORE).
-An AI chatbot answers questions from curated material and cites its sources, alongside a career
-path recommender, skill-gap analysis, elective guidance and a semester roadmap.
+AI-assisted career and academic guidance for IIT Roorkee students, built for **ECC-399 (ECE CORE)**.
+Ask a question and get an answer written from seniors' experiences and the official curriculum, with
+every point cited to the document it came from. Around the chatbot sit a career path recommender,
+skill-gap analysis, elective guidance and a semester roadmap. ECE is covered in depth; other branches
+get basic coverage.
 
-> Work in progress. Setup steps below will be filled in as the app is built.
+| Landing page | Electives |
+|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Electives page](docs/screenshots/electives.png) |
 
-## Stack
+![404 page](docs/screenshots/not-found.png)
 
-- Next.js (App Router, TypeScript) + Tailwind, deployed on Vercel
-- Supabase: Postgres, pgvector, Google login restricted to IITR accounts
-- LLM: free tiers only; Groq gpt-oss-120b, then Groq qwen3.8-27b (separate rate limit), then Gemini as last resort
-- Embeddings computed locally
-- Python data scripts in `scripts/`
+All pages except the landing page need an `@iitr.ac.in` Google login. The screenshots above show only
+public or non-personal content.
+
+## Features
+
+- **Chatbot with citations.** Answers only from retrieved context, names the document and track behind
+  each point, and says plainly when the data doesn't cover a question. Thumbs up/down on every answer
+  is stored for review. Repeated questions are served from a cache.
+- **Career path recommender.** Interests, skills and target tracks give a ranked list of tracks
+  (Software, Quant/HFT, Data Science, Analyst, Consulting/PM, ECE Core) with reasons. The scoring is
+  rule-based and unit-tested; the LLM only rewrites the reasons into a short summary.
+- **Skill-gap analysis.** Your skill ratings against each track's skill matrix, with learning resources
+  taken only from links found in the source documents.
+- **Elective guidance.** Program electives, TEB baskets and open electives from the official curriculum,
+  tagged with the career tracks each one helps.
+- **Semester roadmap.** A plan up to Year 4 Spring: core courses, suggested electives and skills to
+  build each semester, printable as PDF.
+- **Profile and privacy controls.** Clear chat history or delete all your data from the profile page.
+
+## Architecture
+
+```
+ Browser ──► Next.js (App Router, TypeScript, Tailwind) on Vercel
+               │   proxy.ts: session refresh + IITR-only gate
+               │
+               ├─► Supabase Auth (Google login, @iitr.ac.in only)
+               ├─► Supabase Postgres + pgvector (content tables, profiles, chats; RLS on everything)
+               ├─► Supabase Edge Function `embed` (gte-small) ── embeds the question
+               └─► lib/llm.ts ── Groq gpt-oss-120b → Groq qwen3.8-27b → Gemini (on 429 / timeout)
+```
+
+- **Retrieval.** The question is embedded with gte-small (384 dims) in an Edge Function; the
+  `match_chunks` SQL function returns the top few chunks by cosine similarity (HNSW index, capped at 8),
+  slightly favouring seniors' advice over reference summaries. Only those chunks go into the prompt.
+- **LLM chain.** `lib/llm.ts` is the only place that calls a model. It tries Groq's `openai/gpt-oss-120b`,
+  then Groq's `qwen/qwen3.8-27b` (a separate rate-limit bucket), then Gemini's free tier, moving on
+  automatically on rate-limit errors, and shows a friendly "busy, try again shortly" message if all fail.
+  Free tiers only, no paid APIs.
+- **Embeddings** are computed locally for the documents (`scripts/embed.py`, ONNX) and by the Supabase
+  Edge Function for questions. Both use the same model and pooling, so they share one vector space.
+- **Rules, not LLM, where possible.** Recommender, skill gap, electives and roadmap are deterministic
+  TypeScript (`lib/careers/`, tested with `npm test`); the LLM is used for chat answers and for short
+  friendly rewrites only.
+
+## Data pipeline
+
+Python scripts in `scripts/` turn raw material (kept outside git in `data/`) into rows in Supabase:
+
+1. `inventory.py`: list every file, merge exact and near duplicates, assign a track and a display title
+   with no personal names.
+2. `extract.py`: text from PDF, DOCX and PPTX, with Tesseract OCR for scanned pages.
+3. `anonymise.py`: regex removal of emails, phones, roll numbers and profile links; names replaced
+   (spaCy plus signature-line rules) in seniors' material; a review report for anything uncertain.
+4. `structure.py`: an LLM structures each document (experiences, tips, resource lists, summaries),
+   run slowly and resumably to respect free-tier limits.
+5. `extract_courses.py` and `check_skill_matrix.py`: parse the curriculum into courses and slots, and
+   validate the hand-built skill matrix.
+6. `embed.py`: split into chunks and embed locally with gte-small.
+7. `load.py`: idempotent upload to Supabase using the secret key; never touches user tables.
+
+`harvest_links.py` collects every link in the documents so that any resource URL the app shows can be
+traced to a source, and `site_stats.py` writes the committed counts shown on the landing page.
+
+## Privacy and security
+
+- **IITR-only login.** Google sign-in is accepted only for `@iitr.ac.in` addresses (department
+  subdomains included); other accounts are signed out immediately. The same rule is enforced in the
+  proxy, in the database (`is_iitr_user()`) and in the `embed` Edge Function.
+- **Anonymisation before storage.** Names, emails, phones, roll numbers and profile URLs are stripped
+  before anything is loaded into Supabase. Original file names are never stored or shown.
+- **Row Level Security everywhere.** Content tables are read-only for signed-in IITR users and written
+  only by the loader with the secret key. Profiles, conversations, messages and feedback are own-rows
+  only. The answer cache is server-only. Anonymous visitors get no grants at all.
+- **RLS tests.** `supabase/tests/rls_tests.sql` is a SQL suite that seeds fake users,
+  runs each check as `anon` or `authenticated` with forged claims, and rolls everything back. Paste it
+  into the SQL Editor after each migration; the first row reports whether all tests passed. It is run
+  by hand, not in CI.
+- **No resume storage.** No resume table exists. Questions that look like they contain personal details
+  skip the answer cache.
+- **Third-party AI providers.** Questions and the retrieved passages are sent to Groq and Google Gemini (free tiers) to generate answers. Gemini's free tier may use inputs to improve Google's products. No profile data or names are sent: a prompt holds only the question text and the retrieved passages.
+- **User control.** Clear chat history or delete your data from `/profile`; `/privacy` explains what is stored.
+- **Repo hygiene.** The repo is public and code-only. `data/` and `.env*` are gitignored, and a
+  pre-commit hook blocks data files, large files, API keys, full IITR email addresses and phone numbers.
+- **Abuse limits.** Per-user chat rate limit, and the embedding function is callable only by signed-in IITR users.
+
+## Known limitations
+
+- **No placement data.** Nothing here covers placement statistics, cutoffs or packages; the chatbot says
+  so instead of guessing. Content is seniors' experiences and curriculum documents only.
+- **Title-based elective mapping.** Which tracks an elective helps is inferred from course titles because
+  syllabi weren't available, so some suggestions are approximate. The electives page says this.
+- **Thin Quant/HFT and Data Science material.** These tracks have far less source material than
+  Software and ECE Core, so answers there are shorter and less certain.
+- **ECE-centred.** Other branches get the skill plan and general tracks, not branch-specific courses.
+- **Free-tier limits.** Heavy use can hit the LLM rate limits; the app falls back and may show a busy message.
+- **Resume analyser not built.** It was the lowest priority and is not included.
+- **RLS tests are manual,** not part of an automated CI run.
 
 ## Setup
 
@@ -73,7 +169,7 @@ path recommender, skill-gap analysis, elective guidance and a semester roadmap.
    ```
 
 6. Run the SQL migrations in `supabase/migrations/` in the Supabase SQL Editor, oldest first
-   (`20261029120000_initial_schema.sql`, then `20261029180000_profile_onboarding.sql`). After a
+   (`20261029120000_initial_schema.sql`, then `20261029180000_profile_onboarding.sql`, then `20261029200000_skill_gap_priorities.sql`). After a
    migration, paste `supabase/tests/rls_tests.sql` into the SQL Editor; row 0 should say all tests passed.
 
 7. Run the dev server:

@@ -37,3 +37,6 @@ __pycache__/
 
 # Supabase CLI local state (project ref, versions)
 supabase/.temp/
+
+# Generated brag video output (renders, node_modules)
+brag-output*/
